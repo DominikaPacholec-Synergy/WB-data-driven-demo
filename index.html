@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Workflow Builder — configured by data</title>
+    <script>
+      // Must run before the SDK stylesheet resolves: html[data-theme] gates the
+      // 174 semantic colour tokens, and the SDK only sets the attribute in a
+      // useEffect INSIDE <Root>. Without this, the first paint is unstyled.
+      try {
+        var mode = localStorage.getItem('wb-theme');
+        if (mode === 'dark' || mode === 'light') document.documentElement.dataset.theme = mode;
+      } catch (error) {
+        /* private mode — keep the static default */
+      }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- --wb-font-family asks for Poppins but the SDK ships no font file, so the
+         typography token would be invisible without these. -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

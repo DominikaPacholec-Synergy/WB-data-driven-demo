@@ -1,0 +1,55 @@
+{
+  "id": "invoice-approval",
+  "label": "Invoice Approval",
+  "description": "Finance back-office. Human-in-the-loop approval above a configured threshold.",
+  "icon": "Invoice",
+  "chrome": {
+    "documentTitle": "Invoice Approval — Workflow Builder",
+    "productName": "Ledger Flow",
+    "tagline": "Accounts payable automation",
+    "nav": [
+      { "id": "builder", "label": "Builder", "icon": "FlowArrow" },
+      { "id": "tasks", "label": "Tasks", "icon": "Tray" },
+      { "id": "executions", "label": "Executions", "icon": "ListChecks" }
+    ]
+  },
+  "run": {
+    "context": {
+      "ai.vendor": "ACME Corporation",
+      "ai.amount": 24500,
+      "ai.currency": "EUR",
+      "ai.requiresApproval": true,
+      "ai.reason": "Amount exceeds automatic approval limit."
+    },
+    "facts": [
+      { "label": "Customer", "key": "ai.vendor" },
+      {
+        "label": "Amount",
+        "key": "ai.amount",
+        "format": "money",
+        "currencyKey": "ai.currency",
+        "strong": true
+      },
+      {
+        "label": "AI recommendation",
+        "key": "ai.requiresApproval",
+        "format": "flag",
+        "trueText": "Manual approval required",
+        "falseText": "Safe to auto-approve"
+      },
+      { "label": "Reason", "key": "ai.reason" }
+    ]
+  },
+  "taskFields": {
+    "assignee": "assignee",
+    "priority": "priority",
+    "dueHours": "dueAfterHours",
+    "note": "reviewerNote",
+    "allowReject": "allowReject"
+  },
+  "statusVocabulary": [
+    { "value": "active", "label": "Active", "icon": "StatusActive", "tone": "ok" },
+    { "value": "draft", "label": "Draft", "icon": "StatusDraft", "tone": "muted" },
+    { "value": "disabled", "label": "Disabled", "icon": "StatusDisabled", "tone": "muted" }
+  ]
+}

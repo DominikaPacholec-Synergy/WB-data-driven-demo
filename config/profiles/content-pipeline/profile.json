@@ -1,0 +1,49 @@
+{
+  "id": "content-pipeline",
+  "label": "AI Content Pipeline",
+  "description": "Same code, same components — a different palette, panel set and design system.",
+  "icon": "Sparkle",
+  "chrome": {
+    "documentTitle": "Content Pipeline — Workflow Builder",
+    "productName": "Prism",
+    "tagline": "Editorial automation",
+    "nav": [
+      { "id": "builder", "label": "Compose", "icon": "PenNib" },
+      { "id": "tasks", "label": "Review queue", "icon": "Tray" },
+      { "id": "executions", "label": "Runs", "icon": "ListChecks" }
+    ]
+  },
+  "run": {
+    "context": {
+      "brief.topic": "Durable execution for product teams",
+      "draft.readability": 48,
+      "draft.words": 1450,
+      "draft.needsEditor": true,
+      "draft.reason": "Readability scored below the auto-publish threshold of 60."
+    },
+    "facts": [
+      { "label": "Topic", "key": "brief.topic" },
+      { "label": "Readability", "key": "draft.readability", "strong": true },
+      { "label": "Words", "key": "draft.words" },
+      {
+        "label": "AI recommendation",
+        "key": "draft.needsEditor",
+        "format": "flag",
+        "trueText": "Editor review required",
+        "falseText": "Safe to publish"
+      },
+      { "label": "Reason", "key": "draft.reason" }
+    ]
+  },
+  "taskFields": {
+    "assignee": "editor",
+    "priority": "reviewDepth",
+    "dueHours": "slaHours",
+    "note": "notes"
+  },
+  "statusVocabulary": [
+    { "value": "active", "label": "Live", "icon": "StatusActive", "tone": "ok" },
+    { "value": "draft", "label": "Draft", "icon": "StatusDraft", "tone": "muted" },
+    { "value": "disabled", "label": "Paused", "icon": "StatusDisabled", "tone": "muted" }
+  ]
+}

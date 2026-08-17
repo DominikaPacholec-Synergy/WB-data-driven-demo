@@ -1,0 +1,16 @@
+{
+  "profiles": [
+    {
+      "id": "invoice-approval",
+      "label": "Invoice Approval",
+      "description": "Finance back-office. Human-in-the-loop approval above a configured threshold.",
+      "icon": "Invoice"
+    },
+    {
+      "id": "content-pipeline",
+      "label": "AI Content Pipeline",
+      "description": "Same code, same components — a different palette, panel set and design system.",
+      "icon": "Sparkle"
+    }
+  ]
+}

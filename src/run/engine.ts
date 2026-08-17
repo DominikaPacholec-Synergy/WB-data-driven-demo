@@ -1,0 +1,377 @@
+import {
+  getStoreEdges,
+  getStoreNodes,
+  type WorkflowBuilderEdge,
+  type WorkflowBuilderNode,
+} from '@workflowbuilder/sdk';
+
+import type { TaskFieldMap } from '../config/types';
+import { useRunStore } from './store';
+
+/**
+ * A deterministic interpreter for the diagram that is already on the canvas.
+ *
+ * It reads nodes and edges out of the SDK store rather than out of the config,
+ * so the thing being executed is the thing you just edited: retune the branch
+ * condition in the properties panel and the next run takes the other path. Same
+ * JSON, two surfaces — design and run.
+ *
+ * A module singleton, not a hook: a run parked on a human task has to survive
+ * navigating away, and its timers must not die with a component.
+ */
+
+const STEP_DELAY_MS = 900;
+
+const timers = new Set<ReturnType<typeof setTimeout>>();
+
+/** Matches the spec's "#1842". Bumped per run so ids read like real ones. */
+let nextExecutionNumber = 1842;
+
+/**
+ * The active profile's human-task property names. Set by App whenever the
+ * profile changes; the engine is a plain module, so this is its config channel.
+ */
+let taskFields: TaskFieldMap = {};
+
+/**
+ * The mocked upstream result each run starts with. Branch conditions resolve
+ * `{{...}}` against it, so it MUST come from the profile: the invoice flow
+ * compares `{{ai.amount}}` while the editorial one compares
+ * `{{draft.readability}}`, and a hard-coded map silently resolved the other
+ * profile's operand to `undefined` — which coerced to 0 and "worked" by luck.
+ */
+let runContext: Record<string, unknown> = {};
+
+/** Which profile's diagram is currently loaded. Stamped onto every run. */
+let activeProfileId = '';
+
+export function configureRun(
+  profileId: string,
+  map: TaskFieldMap | undefined,
+  context: Record<string, unknown> | undefined,
+): void {
+  activeProfileId = profileId;
+  taskFields = map ?? {};
+  runContext = context ?? {};
+}
+
+type Props = Record<string, unknown>;
+
+const propertiesOf = (node: WorkflowBuilderNode): Props =>
+  ((node.data as { properties?: Props })?.properties ?? {}) as Props;
+
+const paletteTypeOf = (node: WorkflowBuilderNode): string =>
+  String((node.data as { type?: unknown })?.type ?? '');
+
+const labelOf = (node: WorkflowBuilderNode): string =>
+  String(propertiesOf(node).label ?? paletteTypeOf(node) ?? node.id);
+
+/*
+ * Node roles are recognised from SHAPE, not from a hard-coded list of type
+ * names. `approval.human` in the invoice profile and `review.human` in the
+ * content profile both pause a run; a node carrying `decisionBranches` both
+ * branches. Matching on the data keeps the engine profile-agnostic — hard-coding
+ * `'approval.human'` would quietly break the second profile.
+ */
+const isHumanNode = (node: WorkflowBuilderNode) => /\.human$/.test(paletteTypeOf(node));
+
+const branchesOf = (node: WorkflowBuilderNode): DecisionBranch[] => {
+  const value = propertiesOf(node).decisionBranches;
+  return Array.isArray(value) ? (value as DecisionBranch[]) : [];
+};
+
+type Condition = {
+  x: string;
+  comparisonOperator: string;
+  y: string;
+  logicalOperator?: string;
+};
+
+type DecisionBranch = {
+  id: string;
+  label?: string;
+  conditions?: Condition[];
+};
+
+/* --------------------------------------------------------------- operands */
+
+/** `"{{ai.amount}}"` → the run context value. Operands are templates, not names. */
+function resolveOperand(raw: string, context: Record<string, unknown>): unknown {
+  const whole = /^\s*\{\{\s*([^}]+?)\s*\}\}\s*$/.exec(raw);
+  if (whole) return context[whole[1]];
+  // Mixed text: interpolate, then let coercion decide if it is a number.
+  return raw.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (_, key: string) => String(context[key.trim()] ?? ''));
+}
+
+function coerce(value: unknown): number | string | boolean {
+  if (typeof value === 'number' || typeof value === 'boolean') return value;
+  const text = String(value ?? '').trim();
+  if (text !== '' && Number.isFinite(Number(text))) return Number(text);
+  return text;
+}
+
+function compare(left: unknown, operator: string, right: unknown): boolean {
+  const l = coerce(left);
+  const r = coerce(right);
+  const numeric = typeof l === 'number' && typeof r === 'number';
+
+  switch (operator) {
+    case 'isEqual':
+      return numeric ? l === r : String(l) === String(r);
+    case 'isNotEqual':
+      return numeric ? l !== r : String(l) !== String(r);
+    case 'isGreaterThan':
+      return Number(l) > Number(r);
+    case 'isGreaterThanOrEqual':
+      return Number(l) >= Number(r);
+    case 'isLessThan':
+      return Number(l) < Number(r);
+    case 'isLessThanOrEqual':
+      return Number(l) <= Number(r);
+    case 'isContaining':
+      return String(l).toLowerCase().includes(String(r).toLowerCase());
+    case 'isNotContaining':
+      return !String(l).toLowerCase().includes(String(r).toLowerCase());
+    case 'isBefore':
+      return Date.parse(String(l)) < Date.parse(String(r));
+    case 'isAfter':
+      return Date.parse(String(l)) > Date.parse(String(r));
+    default:
+      return false;
+  }
+}
+
+/**
+ * `logicalOperator` joins a condition with the NEXT one (per the SDK's type
+ * docs), so folding left uses the PREDECESSOR's operator to combine.
+ */
+function evaluate(conditions: Condition[], context: Record<string, unknown>): boolean {
+  return conditions.reduce((accumulated, condition, index) => {
+    const result = compare(
+      resolveOperand(condition.x, context),
+      condition.comparisonOperator,
+      resolveOperand(condition.y, context),
+    );
+    if (index === 0) return result;
+    const joiner = String(conditions[index - 1].logicalOperator ?? 'AND').toUpperCase();
+    return joiner === 'OR' ? accumulated || result : accumulated && result;
+  }, true);
+}
+
+/**
+ * First branch whose conditions hold. A branch with no conditions is the
+ * default — that is how the seeded "Auto-approve" branch is authored.
+ */
+function pickBranch(
+  node: WorkflowBuilderNode,
+  context: Record<string, unknown>,
+): DecisionBranch | undefined {
+  const branches = branchesOf(node);
+  const matched = branches.find(
+    (branch) => branch.conditions?.length && evaluate(branch.conditions, context),
+  );
+  return (
+    matched ??
+    branches.find((branch) => !branch.conditions?.length) ??
+    branches[branches.length - 1]
+  );
+}
+
+/* ------------------------------------------------------------------ graph */
+
+function outgoing(
+  edges: WorkflowBuilderEdge[],
+  nodeId: string,
+  branchId?: string,
+): WorkflowBuilderEdge[] {
+  return edges.filter((edge) => {
+    if (edge.source !== nodeId) return false;
+    if (branchId === undefined) return true;
+    return edge.sourceHandle?.endsWith(`:inner:${branchId}`) ?? false;
+  });
+}
+
+/** The start node: `templateType === 'start-node'`, else whatever has no input. */
+function findStart(
+  nodes: WorkflowBuilderNode[],
+  edges: WorkflowBuilderEdge[],
+): WorkflowBuilderNode | undefined {
+  return (
+    nodes.find((node) => node.type === 'start-node') ??
+    nodes.find((node) => !edges.some((edge) => edge.target === node.id))
+  );
+}
+
+/* ----------------------------------------------------------------- engine */
+
+function later(run: () => void) {
+  const timer = setTimeout(() => {
+    timers.delete(timer);
+    run();
+  }, STEP_DELAY_MS);
+  timers.add(timer);
+}
+
+function advance(execId: string, nodeId: string) {
+  const store = useRunStore.getState();
+  const execution = store.executions[execId];
+  if (!execution) return;
+
+  const nodes = getStoreNodes();
+  const edges = getStoreEdges();
+  const node = nodes.find((candidate) => candidate.id === nodeId);
+
+  if (!node) {
+    store.log(execId, `Step ${nodeId} is missing from the diagram`);
+    store.setStatus(execId, 'failed');
+    return;
+  }
+
+  if (isHumanNode(node)) {
+    suspend(execId, node);
+    return;
+  }
+
+  store.setNodeStatus(execId, nodeId, 'running');
+  store.log(execId, `${labelOf(node)} started`);
+
+  later(() => {
+    const live = useRunStore.getState();
+    if (!live.executions[execId]) return;
+    live.setNodeStatus(execId, nodeId, 'done');
+
+    const context = live.executions[execId].context;
+    const branches = branchesOf(node);
+    let branchId: string | undefined;
+
+    if (branches.length) {
+      const branch = pickBranch(node, context);
+      branchId = branch?.id;
+      live.log(
+        execId,
+        `${labelOf(node)} evaluated`,
+        branch ? `Took the “${branch.label ?? branch.id}” branch` : 'No branch matched',
+      );
+    } else {
+      live.log(execId, `${labelOf(node)} completed`);
+    }
+
+    const next = outgoing(edges, nodeId, branchId)[0];
+    if (next) {
+      advance(execId, next.target);
+    } else {
+      live.setStatus(execId, 'completed');
+      live.log(execId, 'Workflow completed');
+    }
+  });
+}
+
+/** Reads a task field through the profile's name mapping. */
+function taskField(properties: Props, role: keyof TaskFieldMap): unknown {
+  const name = taskFields[role];
+  return name ? properties[name] : undefined;
+}
+
+/** The suspension point. A task is created and the engine stops — no timer. */
+function suspend(execId: string, node: WorkflowBuilderNode) {
+  const store = useRunStore.getState();
+  const properties = propertiesOf(node);
+
+  const assignee = String(taskField(properties, 'assignee') ?? 'Unassigned');
+  const rejectFlag = taskField(properties, 'allowReject');
+
+  store.setNodeStatus(execId, node.id, 'waiting');
+  store.setStatus(execId, 'waiting');
+  store.createTask({
+    id: `${execId}:${node.id}`,
+    profileId: store.executions[execId]?.profileId ?? activeProfileId,
+    execId,
+    nodeId: node.id,
+    title: `${labelOf(node)} #${execId}`,
+    assignee,
+    priority: String(taskField(properties, 'priority') ?? 'normal'),
+    dueAfterHours: Number(taskField(properties, 'dueHours') ?? 24),
+    // No mapped flag means the profile never disables Reject.
+    allowReject: rejectFlag === undefined ? true : rejectFlag !== false,
+    reviewerNote: String(taskField(properties, 'note') ?? ''),
+  });
+  store.log(execId, 'Human task created', `Assigned to ${assignee}`);
+}
+
+export function startRun(workflowName: string): string | null {
+  const nodes = getStoreNodes();
+  const edges = getStoreEdges();
+  const start = findStart(nodes, edges);
+  if (!start) return null;
+
+  const execId = String(nextExecutionNumber++);
+  const steps = nodes.map((node) => ({ id: node.id, label: labelOf(node) }));
+
+  /*
+   * A copy, so later runs are unaffected if anything mutates one execution's
+   * context. The values come from `profile.run.context` — which is what the
+   * seeded condition compares against, so editing the threshold in the
+   * properties panel really does send the next run down the other branch.
+   */
+  useRunStore
+    .getState()
+    .createExecution(execId, activeProfileId, workflowName, steps, { ...runContext });
+
+  advance(execId, start.id);
+  return execId;
+}
+
+/**
+ * Resume. Approve continues along the node's outgoing edge; reject ends the run.
+ *
+ * There is deliberately no reject branch in the seeded diagram — the Human
+ * Approval node has exactly one outgoing edge, labelled "Approved". So a
+ * rejection is a terminal state, not a detour, and the run is marked `rejected`
+ * rather than silently "completed".
+ */
+export function resolveTask(taskId: string, decision: 'approve' | 'reject', comment?: string) {
+  const store = useRunStore.getState();
+  const task = store.tasks[taskId];
+  if (!task || task.status !== 'pending') return;
+
+  /*
+   * Never resume across profiles. `advance` walks whatever diagram the SDK store
+   * currently holds, so resuming a task raised under a different profile would
+   * step through unrelated nodes. The views already filter by profile; this is
+   * the backstop that makes the rule impossible to bypass.
+   */
+  if (task.profileId !== activeProfileId) return;
+
+  store.closeTask(taskId, decision === 'approve' ? 'completed' : 'rejected', comment);
+
+  const { execId, nodeId } = task;
+  store.setNodeStatus(execId, nodeId, decision === 'approve' ? 'done' : 'rejected');
+  store.log(
+    execId,
+    decision === 'approve' ? 'Approved by user' : 'Rejected by user',
+    comment?.trim() ? comment.trim() : undefined,
+  );
+
+  if (decision === 'reject') {
+    store.setStatus(execId, 'rejected');
+    store.log(execId, 'Workflow stopped — no reject path is configured');
+    return;
+  }
+
+  store.setStatus(execId, 'running');
+  store.log(execId, 'Workflow resumed');
+
+  const next = outgoing(getStoreEdges(), nodeId)[0];
+  if (next) {
+    advance(execId, next.target);
+  } else {
+    store.setStatus(execId, 'completed');
+    store.log(execId, 'Workflow completed');
+  }
+}
+
+/** Clears pending timers. Called when the builder unmounts or a profile swaps. */
+export function disposeEngine() {
+  for (const timer of timers) clearTimeout(timer);
+  timers.clear();
+}

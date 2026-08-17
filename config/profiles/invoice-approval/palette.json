@@ -1,0 +1,519 @@
+{
+  "entries": [
+    {
+      "kind": "group",
+      "label": "Intake",
+      "isOpen": true,
+      "nodes": [
+        {
+          "type": "invoice.received",
+          "label": "Invoice Received",
+          "description": "Starts the workflow when a new invoice arrives.",
+          "icon": "Invoice",
+          "templateType": "start-node",
+          "properties": {
+            "source": {
+              "type": "string",
+              "label": "Intake channel",
+              "options": [
+                { "label": "Email inbox", "value": "email", "icon": "EnvelopeSimple" },
+                { "label": "Portal upload", "value": "upload", "icon": "UploadSimple" },
+                { "type": "separator" },
+                { "label": "Supplier API", "value": "api", "icon": "Plugs" }
+              ]
+            },
+            "autoExtract": {
+              "type": "boolean",
+              "label": "Run OCR on arrival"
+            },
+            "vendorAllowList": {
+              "type": "string",
+              "label": "Vendor allow list",
+              "placeholder": "ACME Corporation, Globex, Initech"
+            }
+          },
+          "required": ["source"],
+          "ui": {
+            "preset": "general",
+            "elements": [
+              {
+                "type": "Accordion",
+                "label": "Intake",
+                "elements": [
+                  { "type": "Select", "scope": "#/properties/source" },
+                  { "type": "Switch", "scope": "#/properties/autoExtract" },
+                  { "type": "TextArea", "scope": "#/properties/vendorAllowList" }
+                ]
+              }
+            ]
+          },
+          "defaults": {
+            "source": "email",
+            "autoExtract": true,
+            "vendorAllowList": "ACME Corporation, Globex"
+          },
+          "outputSchema": {
+            "type": "default",
+            "properties": {
+              "invoiceId": {
+                "type": "string",
+                "label": "Invoice ID",
+                "description": "Vendor invoice number"
+              },
+              "vendor": { "type": "string", "label": "Vendor", "description": "Supplier name" },
+              "amount": { "type": "number", "label": "Amount", "description": "Gross total" },
+              "currency": { "type": "string", "label": "Currency", "description": "ISO 4217 code" }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "kind": "group",
+      "label": "Intelligence",
+      "isOpen": true,
+      "nodes": [
+        {
+          "type": "ai.analyze",
+          "label": "Analyze Invoice",
+          "description": "Extracts the amount and recommends whether a human should review it.",
+          "icon": "Robot",
+          "templateType": "ai-node",
+          "properties": {
+            "model": {
+              "type": "string",
+              "label": "Model",
+              "options": [
+                { "label": "Claude Opus 4.5", "value": "claude-opus-4-5", "icon": "ClaudeLogo" },
+                { "label": "Claude Sonnet 4.5", "value": "claude-sonnet-4-5", "icon": "ClaudeLogo" },
+                { "label": "Claude Haiku 4.5", "value": "claude-haiku-4-5", "icon": "ClaudeLogo" }
+              ]
+            },
+            "prompt": {
+              "type": "string",
+              "label": "Prompt",
+              "placeholder": "Analyze the invoice and decide whether it needs manual approval."
+            },
+            "temperature": {
+              "type": "number",
+              "label": "Temperature",
+              "minimum": 0,
+              "maximum": 1,
+              "multipleOf": 0.1
+            },
+            "timeoutSeconds": {
+              "type": "number",
+              "label": "Timeout (s)",
+              "minimum": 5,
+              "maximum": 300
+            }
+          },
+          "required": ["model", "prompt"],
+          "ui": {
+            "preset": "general",
+            "elements": [
+              {
+                "type": "Accordion",
+                "label": "Model",
+                "elements": [
+                  { "type": "Select", "scope": "#/properties/model" },
+                  { "type": "VariableTextArea", "scope": "#/properties/prompt", "minRows": 4 }
+                ]
+              },
+              {
+                "type": "Accordion",
+                "label": "Execution",
+                "elements": [
+                  {
+                    "type": "HorizontalLayout",
+                    "layoutColumns": "1fr 1fr",
+                    "elements": [
+                      { "type": "Text", "scope": "#/properties/temperature", "inputType": "number" },
+                      { "type": "Text", "scope": "#/properties/timeoutSeconds", "inputType": "number" }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "defaults": {
+            "model": "claude-sonnet-4-5",
+            "prompt": "Analyze the invoice and determine whether it should be approved automatically. Return the invoice amount and whether manual approval is required.",
+            "temperature": 0,
+            "timeoutSeconds": 30
+          },
+          "outputSchema": {
+            "type": "default",
+            "properties": {
+              "amount": {
+                "type": "number",
+                "label": "Amount",
+                "description": "Invoice total extracted by the model"
+              },
+              "requiresApproval": {
+                "type": "boolean",
+                "label": "Requires approval",
+                "description": "Whether a human must review this invoice"
+              },
+              "reason": {
+                "type": "string",
+                "label": "Reason",
+                "description": "Why the model made that recommendation"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "kind": "group",
+      "label": "Logic",
+      "isOpen": true,
+      "nodes": [
+        {
+          "type": "flow.condition",
+          "label": "Route by Amount",
+          "description": "Sends large invoices to a human and small ones straight through.",
+          "icon": "GitBranch",
+          "templateType": "decision-node",
+          "properties": {
+            "decisionBranches": {
+              "type": "array",
+              "label": "Branches",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "sourceHandle": { "type": "string" },
+                  "label": { "type": "string", "label": "Title" },
+                  "conditions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "x": { "type": "string" },
+                        "comparisonOperator": { "type": "string" },
+                        "y": { "type": "string" },
+                        "logicalOperator": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "ui": {
+            "preset": "general",
+            "elements": [{ "type": "DecisionBranches", "scope": "#/properties/decisionBranches" }]
+          },
+          "defaults": {
+            "decisionBranches": [
+              {
+                "id": "yes",
+                "sourceHandle": "source:inner:yes",
+                "label": "Needs approval",
+                "conditions": [
+                  {
+                    "x": "{{ai.amount}}",
+                    "comparisonOperator": "isGreaterThan",
+                    "y": "10000",
+                    "logicalOperator": "AND"
+                  }
+                ]
+              },
+              {
+                "id": "no",
+                "sourceHandle": "source:inner:no",
+                "label": "Auto-approve",
+                "conditions": []
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "kind": "group",
+      "label": "Human in the loop",
+      "isOpen": true,
+      "nodes": [
+        {
+          "type": "approval.human",
+          "label": "Human Approval",
+          "description": "Pauses the run until a person approves or rejects the invoice.",
+          "icon": "SealCheck",
+          "properties": {
+            "approvalMode": {
+              "type": "string",
+              "label": "Approval mode",
+              "options": [
+                { "label": "Manual review", "value": "manual", "icon": "UserFocus" },
+                { "label": "Auto-approve below threshold", "value": "auto", "icon": "Lightning" },
+                { "label": "Escalate after timeout", "value": "escalate", "icon": "ArrowBendUpRight" }
+              ]
+            },
+            "assignee": {
+              "type": "string",
+              "label": "Assignee",
+              "placeholder": "Finance Team"
+            },
+            "priority": {
+              "type": "string",
+              "label": "Priority",
+              "options": [
+                { "label": "High", "value": "high", "icon": "ArrowUp" },
+                { "label": "Medium", "value": "medium", "icon": "Minus" },
+                { "label": "Low", "value": "low", "icon": "ArrowDown" }
+              ]
+            },
+            "thresholdAmount": {
+              "type": "number",
+              "label": "Auto-approve below",
+              "minimum": 0
+            },
+            "dueAfterHours": {
+              "type": "number",
+              "label": "Due after (h)",
+              "minimum": 1,
+              "maximum": 168
+            },
+            "onTimeout": {
+              "type": "string",
+              "label": "On timeout",
+              "options": [
+                { "label": "Continue", "value": "continue" },
+                { "label": "Reassign", "value": "reassign" },
+                { "label": "Escalate", "value": "escalate" },
+                { "label": "Fail workflow", "value": "fail" }
+              ]
+            },
+            "allowReject": { "type": "boolean", "label": "Allow reject" },
+            "reviewerNote": { "type": "string", "label": "Note for the reviewer" }
+          },
+          "required": ["approvalMode", "assignee"],
+          "allOf": [
+            {
+              "if": { "properties": { "approvalMode": { "const": "auto" } } },
+              "then": { "properties": { "thresholdAmount": { "type": "number", "minimum": 1 } } }
+            },
+            {
+              "if": { "properties": { "approvalMode": { "const": "escalate" } } },
+              "then": { "properties": { "dueAfterHours": { "type": "number", "minimum": 1 } } }
+            }
+          ],
+          "ui": {
+            "preset": "general",
+            "elements": [
+              {
+                "type": "Accordion",
+                "label": "Assignment",
+                "elements": [
+                  { "type": "Select", "scope": "#/properties/approvalMode" },
+                  { "type": "Text", "scope": "#/properties/assignee", "placeholder": "Finance Team" },
+                  { "type": "Select", "scope": "#/properties/priority" }
+                ]
+              },
+              {
+                "type": "Accordion",
+                "label": "Policy",
+                "elements": [
+                  {
+                    "type": "Text",
+                    "scope": "#/properties/thresholdAmount",
+                    "inputType": "number",
+                    "options": { "customRenderer": "CurrencyAmount", "currency": "EUR" },
+                    "rule": {
+                      "effect": "SHOW",
+                      "condition": {
+                        "scope": "#/properties/approvalMode",
+                        "schema": { "const": "auto" }
+                      }
+                    }
+                  },
+                  {
+                    "type": "MessageOnError",
+                    "scope": "#/properties/thresholdAmount",
+                    "variant": "warning",
+                    "text": "Auto-approval skips human review entirely. Keep the threshold conservative.",
+                    "rule": {
+                      "effect": "SHOW",
+                      "condition": {
+                        "scope": "#/properties/approvalMode",
+                        "schema": { "const": "auto" }
+                      }
+                    }
+                  },
+                  {
+                    "type": "HorizontalLayout",
+                    "layoutColumns": "1fr 1fr",
+                    "elements": [
+                      { "type": "Text", "scope": "#/properties/dueAfterHours", "inputType": "number" },
+                      { "type": "Select", "scope": "#/properties/onTimeout" }
+                    ],
+                    "rule": {
+                      "effect": "SHOW",
+                      "condition": {
+                        "type": "OR",
+                        "conditions": [
+                          { "scope": "#/properties/approvalMode", "schema": { "const": "manual" } },
+                          { "scope": "#/properties/approvalMode", "schema": { "const": "escalate" } }
+                        ]
+                      }
+                    }
+                  },
+                  { "type": "Switch", "scope": "#/properties/allowReject" }
+                ]
+              },
+              {
+                "type": "Accordion",
+                "label": "Notes",
+                "elements": [
+                  { "type": "VariableTextArea", "scope": "#/properties/reviewerNote", "minRows": 3 }
+                ]
+              }
+            ]
+          },
+          "defaults": {
+            "approvalMode": "manual",
+            "assignee": "Finance Team",
+            "priority": "high",
+            "thresholdAmount": 1000,
+            "dueAfterHours": 24,
+            "onTimeout": "escalate",
+            "allowReject": true,
+            "reviewerNote": "Review the invoice and approve or reject the payment."
+          }
+        }
+      ]
+    },
+    {
+      "kind": "group",
+      "label": "Fulfilment",
+      "isOpen": true,
+      "nodes": [
+        {
+          "type": "payment.process",
+          "label": "Process Payment",
+          "description": "Books the payment with the configured provider.",
+          "icon": "CreditCard",
+          "properties": {
+            "provider": {
+              "type": "string",
+              "label": "Provider",
+              "options": [
+                { "label": "SEPA batch", "value": "sepa", "icon": "Bank" },
+                { "label": "Card on file", "value": "card", "icon": "CreditCard" },
+                { "label": "Manual transfer", "value": "manual", "icon": "HandCoins" }
+              ]
+            },
+            "valueDate": { "type": "string", "label": "Value date", "format": "date" },
+            "retries": { "type": "number", "label": "Retries", "minimum": 0, "maximum": 5 },
+            "errorPolicy": {
+              "type": "string",
+              "label": "On error",
+              "options": [
+                { "label": "Fail workflow", "value": "fail" },
+                { "label": "Continue", "value": "continue" },
+                { "label": "Error route", "value": "errorRoute" }
+              ]
+            }
+          },
+          "required": ["provider"],
+          "ui": {
+            "preset": "general",
+            "elements": [
+              {
+                "type": "Accordion",
+                "label": "Payment",
+                "elements": [
+                  { "type": "Select", "scope": "#/properties/provider" },
+                  { "type": "DatePicker", "scope": "#/properties/valueDate" }
+                ]
+              },
+              {
+                "type": "Accordion",
+                "label": "Reliability",
+                "elements": [
+                  {
+                    "type": "HorizontalLayout",
+                    "layoutColumns": "1fr 1fr",
+                    "elements": [
+                      { "type": "Text", "scope": "#/properties/retries", "inputType": "number" },
+                      { "type": "Select", "scope": "#/properties/errorPolicy" }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "defaults": {
+            "provider": "sepa",
+            "retries": 2,
+            "errorPolicy": "fail"
+          }
+        },
+        {
+          "type": "notify.confirmation",
+          "label": "Send Confirmation",
+          "description": "Emails the vendor that the payment has been booked.",
+          "icon": "PaperPlaneTilt",
+          "properties": {
+            "channel": {
+              "type": "string",
+              "label": "Channel",
+              "options": [
+                { "label": "Email", "value": "email", "icon": "EnvelopeSimple" },
+                { "label": "Webhook", "value": "webhook", "icon": "Globe" },
+                { "label": "Slack", "value": "slack", "icon": "SlackLogo" }
+              ]
+            },
+            "subject": { "type": "string", "label": "Subject" },
+            "body": { "type": "string", "label": "Body" }
+          },
+          "required": ["channel"],
+          "ui": {
+            "preset": "general",
+            "elements": [
+              {
+                "type": "Accordion",
+                "label": "Message",
+                "elements": [
+                  { "type": "Select", "scope": "#/properties/channel" },
+                  { "type": "VariableText", "scope": "#/properties/subject" },
+                  { "type": "VariableTextArea", "scope": "#/properties/body", "minRows": 4 }
+                ]
+              }
+            ]
+          },
+          "defaults": {
+            "channel": "email",
+            "subject": "Payment booked for invoice {{invoice.invoiceId}}",
+            "body": "Hello {{invoice.vendor}},\n\nYour invoice has been approved and the payment is scheduled.\n\nLedger Flow"
+          }
+        },
+        {
+          "type": "flow.end",
+          "label": "End",
+          "description": "Marks the run as finished.",
+          "icon": "Flag",
+          "properties": {
+            "completionStatus": {
+              "type": "string",
+              "label": "Completion status",
+              "options": [
+                { "label": "Success", "value": "success", "icon": "CheckCircle" },
+                { "label": "Failed", "value": "failed", "icon": "XCircle" },
+                { "label": "Cancelled", "value": "cancelled", "icon": "Prohibit" }
+              ]
+            }
+          },
+          "ui": {
+            "preset": "general",
+            "elements": [{ "type": "Select", "scope": "#/properties/completionStatus" }]
+          },
+          "defaults": { "completionStatus": "success" }
+        }
+      ]
+    }
+  ]
+}

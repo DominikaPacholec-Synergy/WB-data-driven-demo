@@ -1,0 +1,330 @@
+{
+  "entries": [
+    {
+      "kind": "group",
+      "label": "Sources",
+      "isOpen": true,
+      "nodes": [
+        {
+          "type": "brief.received",
+          "label": "Content Brief",
+          "description": "Kicks off the pipeline from an editorial brief.",
+          "icon": "NotePencil",
+          "templateType": "start-node",
+          "properties": {
+            "audience": {
+              "type": "string",
+              "label": "Audience",
+              "options": [
+                { "label": "Developers", "value": "devs", "icon": "Code" },
+                { "label": "Executives", "value": "execs", "icon": "Briefcase" },
+                { "label": "General", "value": "general", "icon": "Users" }
+              ]
+            },
+            "wordTarget": { "type": "number", "label": "Word target", "minimum": 100, "maximum": 5000 }
+          },
+          "required": ["audience"],
+          "ui": {
+            "preset": "general",
+            "elements": [
+              {
+                "type": "Accordion",
+                "label": "Brief",
+                "elements": [
+                  { "type": "Select", "scope": "#/properties/audience" },
+                  { "type": "Text", "scope": "#/properties/wordTarget", "inputType": "number" }
+                ]
+              }
+            ]
+          },
+          "defaults": { "audience": "devs", "wordTarget": 1200 },
+          "outputSchema": {
+            "type": "default",
+            "properties": {
+              "topic": { "type": "string", "label": "Topic", "description": "Brief headline" },
+              "audience": { "type": "string", "label": "Audience", "description": "Target reader" }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "kind": "group",
+      "label": "Generation",
+      "isOpen": true,
+      "nodes": [
+        {
+          "type": "ai.draft",
+          "label": "Draft Article",
+          "description": "Writes a first draft from the brief.",
+          "icon": "Sparkle",
+          "templateType": "ai-node",
+          "properties": {
+            "model": {
+              "type": "string",
+              "label": "Model",
+              "options": [
+                { "label": "Claude Opus 4.5", "value": "claude-opus-4-5", "icon": "ClaudeLogo" },
+                { "label": "Claude Sonnet 4.5", "value": "claude-sonnet-4-5", "icon": "ClaudeLogo" }
+              ]
+            },
+            "tone": {
+              "type": "string",
+              "label": "Tone",
+              "options": [
+                { "label": "Technical", "value": "technical" },
+                { "label": "Conversational", "value": "conversational" },
+                { "type": "separator" },
+                { "label": "Punchy", "value": "punchy" }
+              ]
+            },
+            "prompt": { "type": "string", "label": "Prompt" }
+          },
+          "required": ["model", "prompt"],
+          "ui": {
+            "preset": "general",
+            "elements": [
+              {
+                "type": "Accordion",
+                "label": "Generation",
+                "elements": [
+                  {
+                    "type": "HorizontalLayout",
+                    "layoutColumns": "1fr 1fr",
+                    "elements": [
+                      { "type": "Select", "scope": "#/properties/model" },
+                      { "type": "Select", "scope": "#/properties/tone" }
+                    ]
+                  },
+                  { "type": "VariableTextArea", "scope": "#/properties/prompt", "minRows": 5 }
+                ]
+              }
+            ]
+          },
+          "defaults": {
+            "model": "claude-opus-4-5",
+            "tone": "technical",
+            "prompt": "Write a first draft on {{brief.topic}} for {{brief.audience}}."
+          },
+          "outputSchema": {
+            "type": "default",
+            "properties": {
+              "draft": { "type": "string", "label": "Draft", "description": "Generated article body" },
+              "readability": { "type": "number", "label": "Readability", "description": "Flesch score" }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "kind": "group",
+      "label": "Routing",
+      "isOpen": true,
+      "nodes": [
+        {
+          "type": "flow.quality",
+          "label": "Quality Gate",
+          "description": "Routes drafts that need an editor.",
+          "icon": "GitBranch",
+          "templateType": "decision-node",
+          "properties": {
+            "decisionBranches": {
+              "type": "array",
+              "label": "Branches",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "sourceHandle": { "type": "string" },
+                  "label": { "type": "string", "label": "Title" },
+                  "conditions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "x": { "type": "string" },
+                        "comparisonOperator": { "type": "string" },
+                        "y": { "type": "string" },
+                        "logicalOperator": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "ui": {
+            "preset": "general",
+            "elements": [{ "type": "DecisionBranches", "scope": "#/properties/decisionBranches" }]
+          },
+          "defaults": {
+            "decisionBranches": [
+              {
+                "id": "review",
+                "sourceHandle": "source:inner:review",
+                "label": "Needs editor",
+                "conditions": [
+                  {
+                    "x": "{{draft.readability}}",
+                    "comparisonOperator": "isLessThan",
+                    "y": "60",
+                    "logicalOperator": "AND"
+                  }
+                ]
+              },
+              {
+                "id": "publish",
+                "sourceHandle": "source:inner:publish",
+                "label": "Ship it",
+                "conditions": []
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "kind": "group",
+      "label": "Editorial",
+      "isOpen": true,
+      "nodes": [
+        {
+          "type": "review.human",
+          "label": "Editor Review",
+          "description": "Waits for a human editor to sign off.",
+          "icon": "Gavel",
+          "properties": {
+            "reviewDepth": {
+              "type": "string",
+              "label": "Review depth",
+              "options": [
+                { "label": "Copy edit", "value": "copy", "icon": "PencilSimple" },
+                { "label": "Structural edit", "value": "structural", "icon": "TreeStructure" },
+                { "label": "Fact check", "value": "facts", "icon": "MagnifyingGlass" }
+              ]
+            },
+            "editor": { "type": "string", "label": "Editor", "placeholder": "Editorial desk" },
+            "slaHours": { "type": "number", "label": "SLA (h)", "minimum": 1, "maximum": 72 },
+            "requiresLegal": { "type": "boolean", "label": "Legal sign-off required" },
+            "legalContact": { "type": "string", "label": "Legal contact" },
+            "notes": { "type": "string", "label": "Notes for the editor" }
+          },
+          "required": ["reviewDepth", "editor"],
+          "allOf": [
+            {
+              "if": { "properties": { "requiresLegal": { "const": true } } },
+              "then": { "properties": { "legalContact": { "type": "string", "minLength": 3 } } }
+            }
+          ],
+          "ui": {
+            "preset": "general",
+            "elements": [
+              {
+                "type": "Accordion",
+                "label": "Review",
+                "elements": [
+                  { "type": "Select", "scope": "#/properties/reviewDepth" },
+                  {
+                    "type": "HorizontalLayout",
+                    "layoutColumns": "2fr 1fr",
+                    "elements": [
+                      { "type": "Text", "scope": "#/properties/editor" },
+                      { "type": "Text", "scope": "#/properties/slaHours", "inputType": "number" }
+                    ]
+                  },
+                  { "type": "Switch", "scope": "#/properties/requiresLegal" },
+                  {
+                    "type": "Text",
+                    "scope": "#/properties/legalContact",
+                    "rule": {
+                      "effect": "SHOW",
+                      "condition": {
+                        "scope": "#/properties/requiresLegal",
+                        "schema": { "const": true }
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "Accordion",
+                "label": "Notes",
+                "elements": [
+                  { "type": "VariableTextArea", "scope": "#/properties/notes", "minRows": 3 }
+                ]
+              }
+            ]
+          },
+          "defaults": {
+            "reviewDepth": "copy",
+            "editor": "Editorial desk",
+            "slaHours": 8,
+            "requiresLegal": false,
+            "notes": "Check the code samples compile before sign-off."
+          }
+        }
+      ]
+    },
+    {
+      "kind": "group",
+      "label": "Delivery",
+      "isOpen": true,
+      "nodes": [
+        {
+          "type": "publish.cms",
+          "label": "Publish",
+          "description": "Pushes the article to the CMS.",
+          "icon": "Globe",
+          "properties": {
+            "target": {
+              "type": "string",
+              "label": "Target",
+              "options": [
+                { "label": "Blog", "value": "blog", "icon": "Article" },
+                { "label": "Newsletter", "value": "newsletter", "icon": "EnvelopeSimple" },
+                { "label": "Docs", "value": "docs", "icon": "BookOpen" }
+              ]
+            },
+            "publishAt": { "type": "string", "label": "Publish at", "format": "date" }
+          },
+          "required": ["target"],
+          "ui": {
+            "preset": "general",
+            "elements": [
+              {
+                "type": "Accordion",
+                "label": "Delivery",
+                "elements": [
+                  { "type": "Select", "scope": "#/properties/target" },
+                  { "type": "DatePicker", "scope": "#/properties/publishAt" }
+                ]
+              }
+            ]
+          },
+          "defaults": { "target": "blog" }
+        },
+        {
+          "type": "flow.end",
+          "label": "Done",
+          "description": "Marks the run as finished.",
+          "icon": "FlagCheckered",
+          "properties": {
+            "completionStatus": {
+              "type": "string",
+              "label": "Completion status",
+              "options": [
+                { "label": "Published", "value": "success", "icon": "CheckCircle" },
+                { "label": "Spiked", "value": "cancelled", "icon": "Prohibit" }
+              ]
+            }
+          },
+          "ui": {
+            "preset": "general",
+            "elements": [{ "type": "Select", "scope": "#/properties/completionStatus" }]
+          },
+          "defaults": { "completionStatus": "success" }
+        }
+      ]
+    }
+  ]
+}

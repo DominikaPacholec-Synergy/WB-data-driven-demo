@@ -1,0 +1,49 @@
+/**
+ * Shell semantics, expressed purely in the SDK's own design-system tokens.
+ *
+ * The rule this file exists to enforce: no literal colour, radius or font-family
+ * anywhere in `src/`. Everything downstream uses `--app-*`, which resolves to
+ * `--ax-*` semantics, which resolve to `--ax-colors-*` primitives — so
+ * overriding a handful of primitives re-skins the editor AND the whole shell
+ * from one place. That is the article's claim, made grep-able.
+ */
+
+:root {
+  --app-bg: var(--ax-ui-bg-tertiary-default);
+  --app-surface: var(--ax-ui-bg-primary-default);
+  --app-text: var(--ax-txt-primary-default);
+  --app-text-muted: var(--ax-txt-secondary-default);
+  --app-text-faint: var(--ax-txt-tertiary-default);
+  --app-border: var(--ax-ui-stroke-primary-default);
+  --app-separator: var(--ax-ui-separator-primary-default);
+  --app-accent: var(--ax-colors-acc1-500);
+  --app-accent-hover: var(--ax-colors-acc1-600);
+  --app-on-accent: var(--ax-txt-primary-white);
+
+  --app-radius: var(--ax-token-radius-shell);
+  --app-radius-sm: var(--ax-token-radius-element-8);
+  --app-radius-chip: var(--ax-token-radius-chips-m);
+
+  --app-gap-xs: var(--ax-token-spacing-spacing-4);
+  --app-gap-sm: var(--ax-token-spacing-spacing-8);
+  --app-gap: var(--ax-token-spacing-spacing-16);
+  --app-gap-lg: var(--ax-token-spacing-spacing-24);
+
+  --app-font: var(--wb-font-family);
+  --app-transition: var(--wb-transition);
+  --app-shadow: 0 1px 2px var(--ax-shadow);
+}
+
+/*
+ * `--ax-ui-bg-secondary-default` is NOT monotonic across themes: in light it is
+ * darker than the primary surface, in dark it is lighter. Using it directly for
+ * a hover state therefore reads correctly in one theme and inverted in the
+ * other, so the hover surface gets an explicit per-theme value.
+ */
+html[data-theme='light'] {
+  --app-surface-hover: var(--ax-colors-gray-200);
+}
+
+html[data-theme='dark'] {
+  --app-surface-hover: var(--ax-colors-gray-650);
+}

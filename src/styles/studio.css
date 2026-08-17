@@ -1,0 +1,262 @@
+/* Config Studio dock. Same rule as the rest of the shell: tokens only. */
+
+.studio {
+  display: flex;
+  flex: 0 0 320px;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--app-border);
+  background: var(--app-surface);
+  color: var(--app-text);
+}
+
+.studio__head {
+  display: flex;
+  align-items: center;
+  gap: var(--app-gap-sm);
+  padding: var(--app-gap-sm);
+  border-bottom: 1px solid var(--app-border);
+}
+
+.studio__tabs {
+  display: flex;
+  gap: var(--app-gap-xs);
+  margin-right: auto;
+}
+
+.studio__tabs button {
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--app-radius-sm);
+  background: transparent;
+  color: var(--app-text-muted);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background var(--app-transition), color var(--app-transition);
+}
+
+.studio__tabs button:hover {
+  background: var(--app-surface-hover);
+}
+
+.studio__tabs button.is-active {
+  border-color: var(--app-border);
+  background: var(--app-surface-hover);
+  color: var(--app-text);
+}
+
+.studio__close {
+  display: inline-flex;
+  padding: 5px;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface);
+  color: var(--app-text);
+  cursor: pointer;
+}
+
+.studio__close:hover {
+  background: var(--app-surface-hover);
+}
+
+/* ----------------------------------------------------------------- panel */
+
+.studio__panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--app-gap);
+  min-height: 0;
+  padding: var(--app-gap);
+  overflow-y: auto;
+}
+
+.studio__lede,
+.studio__hint {
+  margin: 0;
+  color: var(--app-text-faint);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.studio__lede code {
+  font-family: ui-monospace, monospace;
+}
+
+.studio__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-gap-sm);
+}
+
+.studio__group h3 {
+  margin: 0;
+  color: var(--app-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.studio__control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2px var(--app-gap-sm);
+  padding: var(--app-gap-sm);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-sm);
+}
+
+.studio__label {
+  font-size: 13px;
+}
+
+.studio__label em {
+  color: var(--app-text-faint);
+  font-size: 11px;
+  font-style: normal;
+}
+
+/* The token name is the point of the whole panel, not debug output. */
+.studio__token {
+  grid-column: 1;
+  color: var(--app-text-faint);
+  font-family: ui-monospace, monospace;
+  font-size: 10.5px;
+  overflow-wrap: anywhere;
+}
+
+.studio__control > input[type='color'] {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  width: 36px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-sm);
+  background: none;
+  cursor: pointer;
+}
+
+.studio__control > select {
+  grid-column: 1 / -1;
+  margin-top: var(--app-gap-xs);
+  padding: 5px 8px;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface);
+  color: var(--app-text);
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.studio__slider {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: var(--app-gap-sm);
+  margin-top: var(--app-gap-xs);
+}
+
+.studio__slider input[type='range'] {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--app-accent);
+}
+
+.studio__value {
+  min-width: 5ch;
+  color: var(--app-text-muted);
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  text-align: right;
+}
+
+/* ---------------------------------------------------------------- schema */
+
+.studio__subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--app-gap-xs);
+}
+
+.studio__subtabs button {
+  padding: 3px 8px;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-chip);
+  background: var(--app-surface);
+  color: var(--app-text-muted);
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.studio__subtabs button.is-active {
+  border-color: var(--app-accent);
+  color: var(--app-accent);
+}
+
+.studio__editor {
+  flex: 1;
+  min-height: 260px;
+  padding: var(--app-gap-sm);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-bg);
+  color: var(--app-text);
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  resize: vertical;
+  tab-size: 2;
+}
+
+.studio__editor:read-only {
+  color: var(--app-text-muted);
+}
+
+.studio__status {
+  margin: 0;
+  padding: var(--app-gap-sm);
+  border-radius: var(--app-radius-sm);
+  background: var(--ax-chips-acc3-bg);
+  color: var(--ax-chips-acc3-txt);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.studio__status.is-error {
+  background: var(--ax-chips-acc2-bg);
+  color: var(--ax-chips-acc2-txt);
+}
+
+/* ---------------------------------------------------------------- footer */
+
+.studio__footer {
+  display: flex;
+  gap: var(--app-gap-sm);
+}
+
+.studio__footer button {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface);
+  color: var(--app-text);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background var(--app-transition);
+}
+
+.studio__footer button:hover:not(:disabled) {
+  background: var(--app-surface-hover);
+}
+
+.studio__footer button:disabled {
+  color: var(--app-text-faint);
+  cursor: default;
+}
