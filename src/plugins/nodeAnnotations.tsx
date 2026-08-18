@@ -13,11 +13,14 @@ import { lookupNodeConfig, useProvenanceStore } from './provenance';
  * Everything we add inside a node body, mounted on the SDK's
  * `OptionalNodeContent` slot: the run-status badge and the provenance label.
  *
- * ~60 generic lines and no forked node template, so the four built-in
- * `templateType` looks stay intact.
+ * ~60 generic lines and no forked node template, so the built-in `templateType`
+ * looks stay intact.
  *
- * Known limitation: the `ai-node` template does not render this slot — its body
- * is taken by the AI-tools control — so AI nodes show no badge.
+ * Caveat that shapes the config: the `ai-node` template does not render this
+ * slot — its body is taken by the AI-tools control — so a node using that look
+ * would show neither badge nor provenance. That is why the AI nodes in both
+ * profiles omit `templateType` and take the plain `node` look; the icon and the
+ * label carry "this step is AI" instead. One key in `palette.json`, no fork.
  */
 
 const TONE: Record<NodeRunStatus, { tone: string; icon: WBIcon; label: string }> = {

@@ -58,7 +58,6 @@
           "label": "Draft Article",
           "description": "Writes a first draft from the brief.",
           "icon": "Sparkle",
-          "templateType": "ai-node",
           "properties": {
             "model": {
               "type": "string",

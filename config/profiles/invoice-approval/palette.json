@@ -78,7 +78,6 @@
           "label": "Analyze Invoice",
           "description": "Extracts the amount and recommends whether a human should review it.",
           "icon": "Robot",
-          "templateType": "ai-node",
           "properties": {
             "model": {
               "type": "string",

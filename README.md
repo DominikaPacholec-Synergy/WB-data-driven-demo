@@ -70,7 +70,8 @@ compiled from.
 Being straight about the boundary is the point of the demo.
 
 **Pure data, no code:** the palette and its groups; node icons (a `WBIcon`
-string); four built-in node looks via `templateType`; the whole properties panel
+string); the built-in node looks via `templateType` (`start-node`,
+`decision-node` and the plain `node` are on the canvas); the whole properties panel
 (11 controls, 4 layouts, `rule` show/hide/enable/disable); conditional validation
 via `allOf`; the seeded diagram and templates; layout direction; the nav, brand
 and status vocabulary; the mocked run context and the task fact sheet.
@@ -112,8 +113,12 @@ everything else is CSS custom properties.
   identity every render (so never make it an effect dependency) and does nothing
   if called on the next animation frame — xyflow has not re-measured yet. See
   `src/app/BuilderFocus.tsx`.
-- **Known limitation:** the `ai-node` template does not render the
-  `OptionalNodeContent` slot, so AI nodes show no run badge or provenance label.
+- **The `ai-node` look and our badges are mutually exclusive.** That template
+  does not render the `OptionalNodeContent` slot — the AI-tools control takes the
+  body — so a node using it gets neither a run badge nor a provenance label. The
+  AI nodes therefore omit `templateType` and take the plain `node` look; their
+  icon and label carry "this step is AI". Reversing that trade is one key in
+  `palette.json`, which is itself worth demonstrating.
 - `jsonForm.translations` is wired through from `profile.translations`, but
   neither profile ships translation content yet.
 
