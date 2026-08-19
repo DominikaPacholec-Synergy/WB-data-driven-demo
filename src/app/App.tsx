@@ -69,9 +69,20 @@ export default function App() {
 
   const onBuilder = route === 'builder';
 
+  /*
+   * Run starts a run and nothing else — no route change. Whichever view you are
+   * on is the one that shows what happened: the canvas lights up its nodes, the
+   * Executions list grows a run and fills its timeline live, and Tasks gains an
+   * entry the moment the interpreter reaches the human node.
+   *
+   * It works from any of them because the canvas is *parked*, not unmounted (see
+   * `shell__canvas.is-parked`). The interpreter walks the live SDK store —
+   * `getStoreNodes()` / `getStoreEdges()` in `src/run/engine.ts` — which stays
+   * populated off-route. Unmounting the canvas, or hiding it with
+   * `display: none`, would leave a run started from the inbox nothing to walk.
+   */
   const run = () => {
-    const execId = startRun(runtime.name);
-    navigate(execId ? 'executions' : 'builder');
+    startRun(runtime.name);
   };
 
   return (
@@ -101,54 +112,86 @@ export default function App() {
         nodeTypes={runtime.nodeTypes}
         initialNodes={runtime.initialNodes}
         initialEdges={runtime.initialEdges}
-        diagramTemplates={runtime.diagramTemplates}
         plugins={PLUGINS}
         jsonForm={runtime.jsonForm}
         integration={INTEGRATION}
       >
         <div className="shell">
-          <AppBar
-            profiles={profiles}
-            profileId={profileId}
-            chrome={profile.chrome}
-            workflowName={runtime.name}
-            route={route}
-            studioOpen={studioOpen}
-            pendingTasks={pendingTasks}
-            onNavigate={navigate}
-            onSwitchProfile={switchProfile}
-            onToggleStudio={() => setStudioOpen((open) => !open)}
-            onRun={run}
-          />
-
-          <BuilderFocus active={onBuilder} />
-
           {/*
-           * The builder is never unmounted — a run parked on a human task, the
-           * viewport and any in-progress edits all have to survive a trip to the
-           * inbox. Parking it keeps its measured size; `display: none` would make
-           * xyflow measure zero and come back broken.
+           * Layer 0 — the diagram, pulled out of flow so it owns the whole shell,
+           * app-bar band included. This is the Workflow Builder layout itself:
+           * the canvas is the ground, and every panel floats above it, so the
+           * palette and the properties bar cost the diagram no width.
+           *
+           * Parked, not unmounted — a run stopped on a human task, the viewport
+           * and any in-progress edits all have to survive a trip to the inbox,
+           * and `display: none` makes xyflow measure zero and never recover.
+           * Because the canvas is `inset: 0` in both modes its size no longer
+           * changes across a route switch; parking is now only a matter of
+           * fading it out and taking it off the event path.
            */}
-          <div className={`shell__body${onBuilder ? '' : ' is-parked'}`} aria-hidden={!onBuilder}>
-            <aside className="shell__palette">
-              <WorkflowBuilder.Palette />
-            </aside>
-            <main className="shell__canvas">
-              <WorkflowBuilder.Canvas />
-            </main>
-            <aside className="shell__properties">
-              <WorkflowBuilder.PropertiesPanel />
-            </aside>
+          <div
+            className={`shell__canvas${onBuilder ? '' : ' is-parked'}`}
+            aria-hidden={!onBuilder}
+          >
+            <WorkflowBuilder.Canvas />
           </div>
 
-          {onBuilder ? null : (
-            <div className="shell__view">
-              {route === 'tasks' ? (
-                <TasksView profileId={profile.id} facts={profile.run?.facts ?? []} />
-              ) : null}
-              {route === 'executions' ? <ExecutionsView profileId={profile.id} /> : null}
+          {/*
+           * Layer 1 — the chrome. The whole column is `pointer-events: none`, so
+           * the empty space between the cards still pans and zooms the canvas
+           * underneath; only the app bar and the SDK sidebars claim their events
+           * back.
+           */}
+          <div className="shell__chrome">
+            <div className="shell__header">
+              <AppBar
+                profiles={profiles}
+                profileId={profileId}
+                chrome={profile.chrome}
+                route={route}
+                studioOpen={studioOpen}
+                pendingTasks={pendingTasks}
+                onNavigate={navigate}
+                onSwitchProfile={switchProfile}
+                onToggleStudio={() => setStudioOpen((open) => !open)}
+                onRun={run}
+              />
             </div>
-          )}
+
+            <BuilderFocus active={onBuilder} />
+
+            <div className="shell__stage">
+              <div
+                className={`shell__panels${onBuilder ? '' : ' is-parked'}`}
+                aria-hidden={!onBuilder}
+              >
+                <aside className="shell__palette">
+                  <WorkflowBuilder.Palette />
+                </aside>
+                {/*
+                 * A contract with the SDK, not a spacer for looks: `fitView()`
+                 * reads `document.querySelector('#viewport-bounds')` and derives
+                 * its padding from that rectangle, which is how the diagram gets
+                 * framed in the gap BETWEEN the floating panels rather than
+                 * underneath them. Exactly one may exist on the page.
+                 */}
+                <div id="viewport-bounds" className="shell__viewport-bounds" />
+                <aside className="shell__properties">
+                  <WorkflowBuilder.PropertiesPanel />
+                </aside>
+              </div>
+
+              {onBuilder ? null : (
+                <div className="shell__view">
+                  {route === 'tasks' ? (
+                    <TasksView profileId={profile.id} facts={profile.run?.facts ?? []} />
+                  ) : null}
+                  {route === 'executions' ? <ExecutionsView profileId={profile.id} /> : null}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </WorkflowBuilder.Root>
 

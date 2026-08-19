@@ -63,8 +63,8 @@
               "type": "string",
               "label": "Model",
               "options": [
-                { "label": "Claude Opus 4.5", "value": "claude-opus-4-5", "icon": "ClaudeLogo" },
-                { "label": "Claude Sonnet 4.5", "value": "claude-sonnet-4-5", "icon": "ClaudeLogo" }
+                { "label": "Claude Opus 5", "value": "claude-opus-5", "icon": "ClaudeLogo" },
+                { "label": "Claude Sonnet 5", "value": "claude-sonnet-5", "icon": "ClaudeLogo" }
               ]
             },
             "tone": {
@@ -101,7 +101,7 @@
             ]
           },
           "defaults": {
-            "model": "claude-opus-4-5",
+            "model": "claude-opus-5",
             "tone": "technical",
             "prompt": "Write a first draft on {{brief.topic}} for {{brief.audience}}."
           },
@@ -109,7 +109,18 @@
             "type": "default",
             "properties": {
               "draft": { "type": "string", "label": "Draft", "description": "Generated article body" },
-              "readability": { "type": "number", "label": "Readability", "description": "Flesch score" }
+              "readability": { "type": "number", "label": "Readability", "description": "Flesch score" },
+              "words": { "type": "number", "label": "Words", "description": "Draft length" },
+              "needsEditor": {
+                "type": "boolean",
+                "label": "Needs editor",
+                "description": "Whether an editor must review this draft"
+              },
+              "reason": {
+                "type": "string",
+                "label": "Reason",
+                "description": "Why the model made that recommendation"
+              }
             }
           }
         }
@@ -162,14 +173,7 @@
                 "id": "review",
                 "sourceHandle": "source:inner:review",
                 "label": "Needs editor",
-                "conditions": [
-                  {
-                    "x": "{{draft.readability}}",
-                    "comparisonOperator": "isLessThan",
-                    "y": "60",
-                    "logicalOperator": "AND"
-                  }
-                ]
+                "conditions": []
               },
               {
                 "id": "publish",
@@ -295,7 +299,11 @@
                 "label": "Delivery",
                 "elements": [
                   { "type": "Select", "scope": "#/properties/target" },
-                  { "type": "DatePicker", "scope": "#/properties/publishAt" }
+                  {
+                    "type": "DatePicker",
+                    "scope": "#/properties/publishAt",
+                    "options": { "customRenderer": "IsoDate" }
+                  }
                 ]
               }
             ]

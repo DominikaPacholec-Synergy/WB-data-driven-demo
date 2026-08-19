@@ -49,7 +49,7 @@ export function ConfigStudio({ profile, onApplyPalette, onClose }: Props) {
           ))}
         </div>
         <button type="button" className="studio__close" onClick={onClose} title="Close Config Studio">
-          <Icon name="X" size="small" />
+          <Icon name="X" size="medium" />
         </button>
       </header>
 

@@ -5,7 +5,34 @@
     "nodes": [
       { "id": "c1", "nodeType": "brief.received", "position": { "x": 0, "y": 0 } },
       { "id": "c2", "nodeType": "ai.draft", "position": { "x": 420, "y": 0 } },
-      { "id": "c3", "nodeType": "flow.quality", "position": { "x": 840, "y": 0 } },
+      {
+        "id": "c3",
+        "nodeType": "flow.quality",
+        "position": { "x": 840, "y": 0 },
+        "properties": {
+          "decisionBranches": [
+            {
+              "id": "review",
+              "sourceHandle": "source:inner:review",
+              "label": "Needs editor",
+              "conditions": [
+                {
+                  "x": "{{nodes.c2.readability}}",
+                  "comparisonOperator": "isLessThan",
+                  "y": "60",
+                  "logicalOperator": "AND"
+                }
+              ]
+            },
+            {
+              "id": "publish",
+              "sourceHandle": "source:inner:publish",
+              "label": "Ship it",
+              "conditions": []
+            }
+          ]
+        }
+      },
       { "id": "c4", "nodeType": "review.human", "position": { "x": 1260, "y": -220 } },
       { "id": "c5", "nodeType": "publish.cms", "position": { "x": 1680, "y": 0 } },
       { "id": "c6", "nodeType": "flow.end", "position": { "x": 2100, "y": 0 } }
@@ -32,26 +59,5 @@
       { "id": "ce5", "source": "c4", "target": "c5", "label": "Signed off" },
       { "id": "ce6", "source": "c5", "target": "c6" }
     ]
-  },
-  "templates": [
-    {
-      "id": 1,
-      "name": "With editorial review",
-      "icon": "Gavel",
-      "layoutDirection": "RIGHT",
-      "seed": {
-        "nodes": [
-          { "id": "u1", "nodeType": "brief.received", "position": { "x": 0, "y": 0 } },
-          { "id": "u2", "nodeType": "ai.draft", "position": { "x": 420, "y": 0 } },
-          { "id": "u3", "nodeType": "review.human", "position": { "x": 840, "y": 0 } },
-          { "id": "u4", "nodeType": "publish.cms", "position": { "x": 1260, "y": 0 } }
-        ],
-        "edges": [
-          { "id": "ue1", "source": "u1", "target": "u2" },
-          { "id": "ue2", "source": "u2", "target": "u3" },
-          { "id": "ue3", "source": "u3", "target": "u4" }
-        ]
-      }
-    }
-  ]
+  }
 }

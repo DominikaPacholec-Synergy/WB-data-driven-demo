@@ -5,7 +5,6 @@ import {
   statusOptions,
   type PaletteItem,
   type PaletteItemOrGroup,
-  type TemplateModel,
   type WorkflowBuilderEdge,
   type WorkflowBuilderNode,
 } from '@workflowbuilder/sdk';
@@ -13,6 +12,7 @@ import {
 import type {
   CompiledProfile,
   EditorProfile,
+  FieldSchemaConfig,
   NodeConfig,
   Seed,
   SeedEdge,
@@ -65,16 +65,91 @@ function buildSchema(node: NodeConfig) {
   };
 }
 
+/* --------------------------------------------------------------- captions */
+
+/**
+ * Which uischema types render through the SDK's shared control wrapper.
+ *
+ * That wrapper is the ONLY place a field caption is produced, and it reads
+ * `uischema.label` — NOT the schema property. The SDK's own
+ * `generalInformation` preset sets its labels exactly that way.
+ *
+ * `MessageOnError` is deliberately absent: it goes through the same wrapper, so
+ * a label there would print the field's caption above the warning text.
+ * `AiTools`, `DecisionBranches` and `DynamicConditions` render their own header.
+ */
+const LABELLED_CONTROLS = new Set([
+  'Text',
+  'TextArea',
+  'Select',
+  'Switch',
+  'DatePicker',
+  'VariableText',
+  'VariableTextArea',
+]);
+
+/** The only scope shape either profile uses. Anything else is left alone. */
+const SCOPE_PREFIX = '#/properties/';
+
+/** The little of a uischema element this pass needs to see. */
+type UiElement = {
+  type?: unknown;
+  scope?: unknown;
+  label?: unknown;
+  placeholder?: unknown;
+  elements?: unknown[];
+};
+
+/**
+ * Copies a field's configured `label` and `placeholder` from the schema property
+ * onto its uischema element, so both are declared ONCE — next to the property,
+ * where `options` and `minimum` already live. Without this the SDK silently
+ * renders every config-driven field with no caption at all, which on a Switch
+ * leaves a bare toggle that says nothing.
+ *
+ * `placeholder` rides along because the SDK splits the same way: its `Select`
+ * reads `schema.placeholder`, but `Text` / `TextArea` / `VariableText*` read the
+ * uischema element — so a schema-side placeholder reached only half the controls.
+ *
+ * Recursive: controls sit inside an `Accordion`, sometimes inside a nested
+ * `HorizontalLayout`. Whatever the element already states wins — per key — so a
+ * config can still override one placement's wording without moving the rest.
+ */
+function withResolvedCaptions(
+  element: unknown,
+  properties: Record<string, FieldSchemaConfig>,
+): unknown {
+  if (element === null || typeof element !== 'object') return element;
+  const el = element as UiElement;
+
+  const walked = Array.isArray(el.elements)
+    ? { ...el, elements: el.elements.map((child) => withResolvedCaptions(child, properties)) }
+    : el;
+
+  if (typeof el.type !== 'string' || !LABELLED_CONTROLS.has(el.type)) return walked;
+  if (typeof el.scope !== 'string' || !el.scope.startsWith(SCOPE_PREFIX)) return walked;
+
+  const field = properties[el.scope.slice(SCOPE_PREFIX.length)];
+  const inherit = (key: 'label' | 'placeholder') =>
+    el[key] === undefined && typeof field?.[key] === 'string' ? { [key]: field[key] } : {};
+
+  return { ...walked, ...inherit('label'), ...inherit('placeholder') };
+}
+
 /**
  * `generalInformation` is the SDK's ready-made Title/Status/Description
  * accordion and `globalControls` its shared footer controls. Reusing both means
  * every node gets a consistent panel for free — from the SDK, not from us.
+ *
+ * Only the config's own elements go through `withResolvedCaptions`; the two SDK
+ * fragments already carry the captions they want.
  */
 function buildUiSchema(node: NodeConfig) {
   const preset = node.ui?.preset ?? 'general';
+  const properties = node.properties ?? {};
   const elements: unknown[] = [
     ...(preset === 'general' ? [generalInformation] : []),
-    ...(node.ui?.elements ?? []),
+    ...(node.ui?.elements ?? []).map((element) => withResolvedCaptions(element, properties)),
     ...(node.ui?.globalControls === false ? [] : globalControls),
   ];
   return { type: 'VerticalLayout', elements };
@@ -182,20 +257,6 @@ export function compileProfile(profile: EditorProfile): CompiledProfile {
 
   const main = compileSeed(profile.workflow.seed, nodeIndex);
 
-  const diagramTemplates: TemplateModel[] = (profile.workflow.templates ?? []).map((template) => ({
-    id: template.id,
-    name: template.name,
-    icon: template.icon,
-    value: {
-      name: template.name,
-      layoutDirection: template.layoutDirection ?? profile.workflow.layoutDirection,
-      diagram: {
-        ...compileSeed(template.seed, nodeIndex),
-        viewport: { x: 0, y: 0, zoom: 1 },
-      },
-    },
-  })) as unknown as TemplateModel[];
-
   return {
     id: profile.id,
     name: profile.workflow.name,
@@ -203,7 +264,6 @@ export function compileProfile(profile: EditorProfile): CompiledProfile {
     nodeTypes,
     initialNodes: main.nodes,
     initialEdges: main.edges,
-    diagramTemplates,
     translations: profile.translations,
     nodeIndex,
     source: profile,

@@ -48,7 +48,9 @@
 
 .studio__close {
   display: inline-flex;
-  padding: 5px;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
   border: 1px solid var(--app-border);
   border-radius: var(--app-radius-sm);
   background: var(--app-surface);
@@ -82,6 +84,14 @@
 
 .studio__lede code {
   font-family: ui-monospace, monospace;
+}
+
+/* The remount wrapper is also the section rhythm: without it the groups
+   stack flush, because .studio__panel gap only reaches its own children. */
+.studio__groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-gap-lg);
 }
 
 .studio__group {
@@ -140,16 +150,10 @@
   cursor: pointer;
 }
 
-.studio__control > select {
+/* Only placement — the look is the design system's, see components.css. */
+.studio__control > .dropdown {
   grid-column: 1 / -1;
   margin-top: var(--app-gap-xs);
-  padding: 5px 8px;
-  border: 1px solid var(--app-border);
-  border-radius: var(--app-radius-sm);
-  background: var(--app-surface);
-  color: var(--app-text);
-  font-family: inherit;
-  font-size: 13px;
 }
 
 .studio__slider {
@@ -221,15 +225,15 @@
   margin: 0;
   padding: var(--app-gap-sm);
   border-radius: var(--app-radius-sm);
-  background: var(--ax-chips-acc3-bg);
-  color: var(--ax-chips-acc3-txt);
+  background: var(--tone-ok-bg);
+  color: var(--tone-ok-txt);
   font-size: 12px;
   overflow-wrap: anywhere;
 }
 
 .studio__status.is-error {
-  background: var(--ax-chips-acc2-bg);
-  color: var(--ax-chips-acc2-txt);
+  background: var(--tone-danger-bg);
+  color: var(--tone-danger-txt);
 }
 
 /* ---------------------------------------------------------------- footer */

@@ -47,6 +47,12 @@ function CurrencyAmountControl({
    * keeps a custom control consistent with every built-in one — otherwise this
    * field alone would show a humanised "Threshold Amount" instead of the
    * configured "Auto-approve below".
+   *
+   * The built-in controls get there differently: they read `uischema.label`, and
+   * `compileProfile()`s caption pass copies the property's label onto the
+   * element for them. This control skips the SDK's wrapper entirely and draws
+   * its own <label>, so it goes to the schema directly rather than relying on
+   * that pass having run.
    */
   const caption = (schema as { label?: string } | undefined)?.label ?? label;
 

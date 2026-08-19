@@ -5,7 +5,6 @@
   "icon": "Invoice",
   "chrome": {
     "documentTitle": "Invoice Approval — Workflow Builder",
-    "productName": "Ledger Flow",
     "tagline": "Accounts payable automation",
     "nav": [
       { "id": "builder", "label": "Builder", "icon": "FlowArrow" },
@@ -15,29 +14,29 @@
   },
   "run": {
     "context": {
-      "ai.vendor": "ACME Corporation",
-      "ai.amount": 24500,
-      "ai.currency": "EUR",
-      "ai.requiresApproval": true,
-      "ai.reason": "Amount exceeds automatic approval limit."
+      "invoice.received.vendor": "ACME Corporation",
+      "invoice.received.currency": "EUR",
+      "ai.analyze.amount": 24500,
+      "ai.analyze.requiresApproval": true,
+      "ai.analyze.reason": "Amount exceeds automatic approval limit."
     },
     "facts": [
-      { "label": "Customer", "key": "ai.vendor" },
+      { "label": "Customer", "key": "invoice.received.vendor" },
       {
         "label": "Amount",
-        "key": "ai.amount",
+        "key": "ai.analyze.amount",
         "format": "money",
-        "currencyKey": "ai.currency",
+        "currencyKey": "invoice.received.currency",
         "strong": true
       },
       {
         "label": "AI recommendation",
-        "key": "ai.requiresApproval",
+        "key": "ai.analyze.requiresApproval",
         "format": "flag",
         "trueText": "Manual approval required",
         "falseText": "Safe to auto-approve"
       },
-      { "label": "Reason", "key": "ai.reason" }
+      { "label": "Reason", "key": "ai.analyze.reason" }
     ]
   },
   "taskFields": {

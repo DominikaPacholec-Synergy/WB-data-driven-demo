@@ -14,9 +14,9 @@ type Snapshot = { nodes: WorkflowBuilderNode[]; edges: WorkflowBuilderEdge[] } |
 
 /**
  * Owns the profile lifecycle and, more importantly, the identity discipline the
- * SDK requires: `nodeTypes` / `initialNodes` / `diagramTemplates` must be stable
- * references, because an inline literal overwrites the SDK's module-level
- * palette holder on every parent render.
+ * SDK requires: `nodeTypes` and `initialNodes` must be stable references,
+ * because an inline literal overwrites the SDK's module-level palette holder on
+ * every parent render.
  */
 export function useProfileRuntime() {
   const [profiles, setProfiles] = useState<ProfileIndexEntry[]>([]);

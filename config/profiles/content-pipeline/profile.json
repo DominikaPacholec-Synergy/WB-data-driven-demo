@@ -5,7 +5,6 @@
   "icon": "Sparkle",
   "chrome": {
     "documentTitle": "Content Pipeline — Workflow Builder",
-    "productName": "Prism",
     "tagline": "Editorial automation",
     "nav": [
       { "id": "builder", "label": "Compose", "icon": "PenNib" },
@@ -15,24 +14,24 @@
   },
   "run": {
     "context": {
-      "brief.topic": "Durable execution for product teams",
-      "draft.readability": 48,
-      "draft.words": 1450,
-      "draft.needsEditor": true,
-      "draft.reason": "Readability scored below the auto-publish threshold of 60."
+      "brief.received.topic": "Durable execution for product teams",
+      "ai.draft.readability": 48,
+      "ai.draft.words": 1450,
+      "ai.draft.needsEditor": true,
+      "ai.draft.reason": "Readability scored below the auto-publish threshold of 60."
     },
     "facts": [
-      { "label": "Topic", "key": "brief.topic" },
-      { "label": "Readability", "key": "draft.readability", "strong": true },
-      { "label": "Words", "key": "draft.words" },
+      { "label": "Topic", "key": "brief.received.topic" },
+      { "label": "Readability", "key": "ai.draft.readability", "strong": true },
+      { "label": "Words", "key": "ai.draft.words" },
       {
         "label": "AI recommendation",
-        "key": "draft.needsEditor",
+        "key": "ai.draft.needsEditor",
         "format": "flag",
         "trueText": "Editor review required",
         "falseText": "Safe to publish"
       },
-      { "label": "Reason", "key": "draft.reason" }
+      { "label": "Reason", "key": "ai.draft.reason" }
     ]
   },
   "taskFields": {

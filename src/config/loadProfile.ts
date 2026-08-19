@@ -27,7 +27,7 @@ function validate(profile: EditorProfile, id: ProfileId): EditorProfile {
   assert(profile.theme, `profile "${id}" is missing theme.json`);
   assert(profile.palette?.entries?.length, `profile "${id}" has an empty palette`);
   assert(profile.workflow?.seed, `profile "${id}" is missing workflow.seed`);
-  assert(profile.chrome?.productName, `profile "${id}" is missing chrome.productName`);
+  assert(profile.chrome?.tagline, `profile "${id}" is missing chrome.tagline`);
   return profile;
 }
 

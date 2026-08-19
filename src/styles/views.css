@@ -215,9 +215,9 @@
 }
 
 .btn--danger {
-  border-color: var(--ax-chips-acc2-stroke);
-  background: var(--ax-chips-acc2-bg);
-  color: var(--ax-chips-acc2-txt);
+  border-color: var(--tone-danger-stroke);
+  background: var(--tone-danger-bg);
+  color: var(--tone-danger-txt);
 }
 
 /* -------------------------------------------------------------- timeline */
@@ -261,20 +261,20 @@
 }
 
 .steps li[data-tone='ok'] {
-  color: var(--ax-chips-acc3-txt);
+  color: var(--tone-ok-txt);
 }
 
 .steps li[data-tone='warn'] {
-  color: var(--ax-chips-acc5-txt);
+  color: var(--tone-warn-txt);
   font-weight: 600;
 }
 
 .steps li[data-tone='info'] {
-  color: var(--ax-chips-acc1-txt);
+  color: var(--tone-info-txt);
 }
 
 .steps li[data-tone='danger'] {
-  color: var(--ax-chips-acc2-txt);
+  color: var(--tone-danger-txt);
 }
 
 .audit li {
@@ -311,20 +311,23 @@
   font-size: 13px;
 }
 
-/* ------------------------------------------ custom JsonForms control */
+/* ----------------------------------------- custom JsonForms controls */
 
-.currency {
+.currency,
+.isodate {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.currency__label {
+.currency__label,
+.isodate__label {
   color: var(--app-text-muted);
   font-size: 12px;
 }
 
-.currency__field {
+.currency__field,
+.isodate__field {
   display: flex;
   align-items: center;
   overflow: hidden;
@@ -333,12 +336,14 @@
   background: var(--app-surface);
 }
 
-.currency__field:focus-within {
+.currency__field:focus-within,
+.isodate__field:focus-within {
   border-color: var(--app-accent);
 }
 
-.currency__field.is-invalid {
-  border-color: var(--ax-chips-acc2-stroke);
+.currency__field.is-invalid,
+.isodate__field.is-invalid {
+  border-color: var(--tone-danger-stroke);
 }
 
 .currency__badge {
@@ -350,7 +355,8 @@
   font-size: 11px;
 }
 
-.currency__field input {
+.currency__field input,
+.isodate__field input {
   flex: 1;
   min-width: 0;
   padding: 7px 10px;
@@ -362,14 +368,31 @@
   font-variant-numeric: tabular-nums;
 }
 
-.currency__field input:focus {
+.currency__field input:focus,
+.isodate__field input:focus {
   outline: none;
 }
 
-.currency__error {
+.currency__error,
+.isodate__error {
   margin: 0;
-  color: var(--ax-chips-acc2-txt);
+  color: var(--tone-danger-txt);
   font-size: 11px;
+}
+
+/*
+ * The native calendar popup, its icon and its spin buttons are painted by the
+ * browser from `color-scheme`, which otherwise follows the OS. This app has its own
+ * toggle, so drive it from `data-theme` — else a dark app on a light OS gets a white
+ * calendar box.
+ */
+.isodate__field input {
+  color-scheme: light;
+  accent-color: var(--app-accent);
+}
+
+html[data-theme='dark'] .isodate__field input {
+  color-scheme: dark;
 }
 
 /* ------------------------------------------------------------ node badge */
@@ -387,33 +410,33 @@
   font-size: 10.5px;
   font-weight: 600;
 
-  --pill-bg: var(--ax-chips-neutral-bg);
-  --pill-txt: var(--ax-chips-neutral-txt);
-  --pill-stroke: var(--app-border);
+  --pill-bg: var(--tone-neutral-bg);
+  --pill-txt: var(--tone-neutral-txt);
+  --pill-stroke: var(--tone-neutral-stroke);
 }
 
 .node-badge[data-tone='ok'] {
-  --pill-bg: var(--ax-chips-acc3-bg);
-  --pill-txt: var(--ax-chips-acc3-txt);
-  --pill-stroke: var(--ax-chips-acc3-stroke);
+  --pill-bg: var(--tone-ok-bg);
+  --pill-txt: var(--tone-ok-txt);
+  --pill-stroke: var(--tone-ok-stroke);
 }
 
 .node-badge[data-tone='warn'] {
-  --pill-bg: var(--ax-chips-acc5-bg);
-  --pill-txt: var(--ax-chips-acc5-txt);
-  --pill-stroke: var(--ax-chips-acc5-stroke);
+  --pill-bg: var(--tone-warn-bg);
+  --pill-txt: var(--tone-warn-txt);
+  --pill-stroke: var(--tone-warn-stroke);
 }
 
 .node-badge[data-tone='danger'] {
-  --pill-bg: var(--ax-chips-acc2-bg);
-  --pill-txt: var(--ax-chips-acc2-txt);
-  --pill-stroke: var(--ax-chips-acc2-stroke);
+  --pill-bg: var(--tone-danger-bg);
+  --pill-txt: var(--tone-danger-txt);
+  --pill-stroke: var(--tone-danger-stroke);
 }
 
 .node-badge[data-tone='info'] {
-  --pill-bg: var(--ax-chips-acc1-bg);
-  --pill-txt: var(--ax-chips-acc1-txt);
-  --pill-stroke: var(--ax-chips-acc1-stroke);
+  --pill-bg: var(--tone-info-bg);
+  --pill-txt: var(--tone-info-txt);
+  --pill-stroke: var(--tone-info-stroke);
 }
 
 /* ------------------------------------------------------------ provenance */

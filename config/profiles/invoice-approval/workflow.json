@@ -14,7 +14,30 @@
         "id": "n3",
         "nodeType": "flow.condition",
         "position": { "x": 0, "y": 400 },
-        "properties": { "label": "Amount > 10 000 EUR?" }
+        "properties": {
+          "label": "Amount > 10 000 EUR?",
+          "decisionBranches": [
+            {
+              "id": "yes",
+              "sourceHandle": "source:inner:yes",
+              "label": "Needs approval",
+              "conditions": [
+                {
+                  "x": "{{nodes.n2.amount}}",
+                  "comparisonOperator": "isGreaterThan",
+                  "y": "10000",
+                  "logicalOperator": "AND"
+                }
+              ]
+            },
+            {
+              "id": "no",
+              "sourceHandle": "source:inner:no",
+              "label": "Auto-approve",
+              "conditions": []
+            }
+          ]
+        }
       },
       {
         "id": "n4",
@@ -49,43 +72,5 @@
       { "id": "e6", "source": "n5", "target": "n6" },
       { "id": "e7", "source": "n6", "target": "n7" }
     ]
-  },
-  "templates": [
-    {
-      "id": 1,
-      "name": "Human-in-the-loop approval",
-      "icon": "SealCheck",
-      "seed": {
-        "nodes": [
-          { "id": "t1n1", "nodeType": "invoice.received", "position": { "x": 0, "y": 0 } },
-          { "id": "t1n2", "nodeType": "ai.analyze", "position": { "x": 0, "y": 200 } },
-          { "id": "t1n3", "nodeType": "approval.human", "position": { "x": 0, "y": 400 } },
-          { "id": "t1n4", "nodeType": "payment.process", "position": { "x": 0, "y": 600 } },
-          { "id": "t1n5", "nodeType": "flow.end", "position": { "x": 0, "y": 800 } }
-        ],
-        "edges": [
-          { "id": "t1e1", "source": "t1n1", "target": "t1n2" },
-          { "id": "t1e2", "source": "t1n2", "target": "t1n3" },
-          { "id": "t1e3", "source": "t1n3", "target": "t1n4" },
-          { "id": "t1e4", "source": "t1n4", "target": "t1n5" }
-        ]
-      }
-    },
-    {
-      "id": 2,
-      "name": "Straight-through processing",
-      "icon": "Lightning",
-      "seed": {
-        "nodes": [
-          { "id": "t2n1", "nodeType": "invoice.received", "position": { "x": 0, "y": 0 } },
-          { "id": "t2n2", "nodeType": "payment.process", "position": { "x": 0, "y": 200 } },
-          { "id": "t2n3", "nodeType": "flow.end", "position": { "x": 0, "y": 400 } }
-        ],
-        "edges": [
-          { "id": "t2e1", "source": "t2n1", "target": "t2n2" },
-          { "id": "t2e2", "source": "t2n2", "target": "t2n3" }
-        ]
-      }
-    }
-  ]
+  }
 }

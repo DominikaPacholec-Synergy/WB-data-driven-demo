@@ -34,11 +34,12 @@ let nextExecutionNumber = 1842;
 let taskFields: TaskFieldMap = {};
 
 /**
- * The mocked upstream result each run starts with. Branch conditions resolve
- * `{{...}}` against it, so it MUST come from the profile: the invoice flow
- * compares `{{ai.amount}}` while the editorial one compares
- * `{{draft.readability}}`, and a hard-coded map silently resolved the other
- * profile's operand to `undefined` — which coerced to 0 and "worked" by luck.
+ * The mocked upstream result each run starts with, keyed `<nodeType>.<output>`.
+ * Branch conditions resolve `{{...}}` against it, so it MUST come from the
+ * profile: the invoice flow compares `{{nodes.n2.amount}}` while the editorial
+ * one compares `{{nodes.c2.readability}}`, and a hard-coded map silently
+ * resolved the other profile's operand to `undefined` — which coerced to 0 and
+ * "worked" by luck.
  */
 let runContext: Record<string, unknown> = {};
 
@@ -95,12 +96,37 @@ type DecisionBranch = {
 
 /* --------------------------------------------------------------- operands */
 
-/** `"{{ai.amount}}"` → the run context value. Operands are templates, not names. */
+/**
+ * `"nodes.n2.amount"` → `"ai.analyze.amount"`.
+ *
+ * The properties panel writes an operand as `{{nodes.<nodeId>.<output>}}`, and
+ * that prefix is not cosmetic: it is the only shape the SDK can TYPE against a
+ * node's `outputSchema`, and a typed operand is the sole reason the conditional
+ * editor offers `>` and `<` at all. An operand it cannot type falls back to
+ * `string`, whose operator list has no comparisons in it.
+ *
+ * Run context is authored per node TYPE, not per node id, so the id is resolved
+ * through the live store: one context entry serves the seeded node AND one you
+ * just dropped from the palette, which has an id no config could have known.
+ */
+function contextKey(template: string): string {
+  const scoped = /^nodes\.([^.]+)\.(.+)$/.exec(template);
+  if (!scoped) return template;
+  const node = getStoreNodes().find((candidate) => candidate.id === scoped[1]);
+  return node ? `${paletteTypeOf(node)}.${scoped[2]}` : template;
+}
+
+const lookup = (template: string, context: Record<string, unknown>): unknown => {
+  const key = contextKey(template.trim());
+  return key in context ? context[key] : context[template.trim()];
+};
+
+/** `"{{nodes.n2.amount}}"` → the run context value. Operands are templates, not names. */
 function resolveOperand(raw: string, context: Record<string, unknown>): unknown {
   const whole = /^\s*\{\{\s*([^}]+?)\s*\}\}\s*$/.exec(raw);
-  if (whole) return context[whole[1]];
+  if (whole) return lookup(whole[1], context);
   // Mixed text: interpolate, then let coercion decide if it is a number.
-  return raw.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (_, key: string) => String(context[key.trim()] ?? ''));
+  return raw.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (_, key: string) => String(lookup(key, context) ?? ''));
 }
 
 function coerce(value: unknown): number | string | boolean {

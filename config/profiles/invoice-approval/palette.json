@@ -83,8 +83,8 @@
               "type": "string",
               "label": "Model",
               "options": [
-                { "label": "Claude Opus 4.5", "value": "claude-opus-4-5", "icon": "ClaudeLogo" },
-                { "label": "Claude Sonnet 4.5", "value": "claude-sonnet-4-5", "icon": "ClaudeLogo" },
+                { "label": "Claude Opus 5", "value": "claude-opus-5", "icon": "ClaudeLogo" },
+                { "label": "Claude Sonnet 5", "value": "claude-sonnet-5", "icon": "ClaudeLogo" },
                 { "label": "Claude Haiku 4.5", "value": "claude-haiku-4-5", "icon": "ClaudeLogo" }
               ]
             },
@@ -136,7 +136,7 @@
             ]
           },
           "defaults": {
-            "model": "claude-sonnet-4-5",
+            "model": "claude-sonnet-5",
             "prompt": "Analyze the invoice and determine whether it should be approved automatically. Return the invoice amount and whether manual approval is required.",
             "temperature": 0,
             "timeoutSeconds": 30
@@ -211,14 +211,7 @@
                 "id": "yes",
                 "sourceHandle": "source:inner:yes",
                 "label": "Needs approval",
-                "conditions": [
-                  {
-                    "x": "{{ai.amount}}",
-                    "comparisonOperator": "isGreaterThan",
-                    "y": "10000",
-                    "logicalOperator": "AND"
-                  }
-                ]
+                "conditions": []
               },
               {
                 "id": "no",
@@ -308,7 +301,7 @@
                 "label": "Assignment",
                 "elements": [
                   { "type": "Select", "scope": "#/properties/approvalMode" },
-                  { "type": "Text", "scope": "#/properties/assignee", "placeholder": "Finance Team" },
+                  { "type": "Text", "scope": "#/properties/assignee" },
                   { "type": "Select", "scope": "#/properties/priority" }
                 ]
               },
@@ -426,7 +419,11 @@
                 "label": "Payment",
                 "elements": [
                   { "type": "Select", "scope": "#/properties/provider" },
-                  { "type": "DatePicker", "scope": "#/properties/valueDate" }
+                  {
+                    "type": "DatePicker",
+                    "scope": "#/properties/valueDate",
+                    "options": { "customRenderer": "IsoDate" }
+                  }
                 ]
               },
               {

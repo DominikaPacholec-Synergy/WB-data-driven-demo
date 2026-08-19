@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 
+import { Dropdown } from '../components/Dropdown';
 import {
   exportThemePatch,
   hasOverrides,
@@ -8,7 +9,7 @@ import {
   setTokenOverride,
 } from '../config/theme';
 import type { ThemeConfig, TokenControl } from '../config/types';
-import { useThemeMode } from './useThemeMode';
+import { useThemeMode } from '../config/useThemeMode';
 
 /**
  * Live design-token controls, generated from `theme.json`'s `inspector` block.
@@ -104,25 +105,52 @@ function LengthControl({ control, onEdit }: { control: TokenControl; onEdit: () 
   );
 }
 
+/** Shown while the live token matches none of the exposed options. */
+const FROM_THEME = { value: '', label: 'From theme.json' };
+
+/*
+ * Two components rather than one so the guard can stay above the hook: the
+ * sibling controls narrow `TokenControl` with an early return, and this is the
+ * only one that needs state, which must not sit behind a conditional return.
+ */
 function ChoiceControl({ control, onEdit }: { control: TokenControl; onEdit: () => void }) {
   if (control.kind !== 'choice') return null;
-  const current = matchOption(readToken(control.token), control.options);
+  return <ChoiceDropdown control={control} onEdit={onEdit} />;
+}
+
+/*
+ * The one control on this panel that holds state, and the stability rule
+ * survives it: a dropdown commits once per choice, not once per animation frame
+ * like the sliders, and the state is local — nothing above this component
+ * re-renders, least of all `<Root>`. Controlled is not optional here, because
+ * the value IS what the trigger displays; re-reading the token would only tell
+ * us what it was before the click.
+ *
+ * Reset still works through the `generation` key on the list: remounting re-runs
+ * `readToken`, and the initialiser picks the restored value up.
+ */
+function ChoiceDropdown({
+  control,
+  onEdit,
+}: {
+  control: Extract<TokenControl, { kind: 'choice' }>;
+  onEdit: () => void;
+}) {
+  const live = matchOption(readToken(control.token), control.options);
+  const [value, setValue] = useState(live ?? FROM_THEME.value);
 
   return (
-    <select
-      defaultValue={current ?? ''}
-      onChange={(event) => {
-        setTokenOverride(control.token, event.currentTarget.value, control.bucket);
+    <Dropdown
+      size="small"
+      value={value}
+      options={live === undefined ? [FROM_THEME, ...control.options] : control.options}
+      onChange={(next) => {
+        setValue(next);
+        setTokenOverride(control.token, next, control.bucket);
         onEdit();
       }}
-    >
-      {current === undefined ? <option value="">From theme.json</option> : null}
-      {control.options.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
+      aria-label={control.label}
+    />
   );
 }
 
@@ -156,7 +184,7 @@ export function TokenPanel({ theme }: Props) {
         the inputs are uncontrolled, so this is the only way their displayed
         value can follow a change that did not come from the widget itself.
       */}
-      <div key={`${mode}:${generation}`}>
+      <div className="studio__groups" key={`${mode}:${generation}`}>
         {theme.inspector.map((group) => (
           <section className="studio__group" key={group.label}>
             <h3>{group.label}</h3>

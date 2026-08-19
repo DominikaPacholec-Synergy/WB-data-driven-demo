@@ -4,7 +4,6 @@ import type {
   NodeSchema,
   PaletteItemOrGroup,
   PluginTranslationResource,
-  TemplateModel,
   UISchema,
   WorkflowBuilderEdge,
   WorkflowBuilderNode,
@@ -145,19 +144,10 @@ export type SeedEdge = {
 
 export type Seed = { nodes: SeedNode[]; edges: SeedEdge[] };
 
-export type DiagramTemplateConfig = {
-  id: number;
-  name: string;
-  icon: string;
-  layoutDirection?: LayoutDirection;
-  seed: Seed;
-};
-
 export type WorkflowConfig = {
   name: string;
   layoutDirection: LayoutDirection;
   seed: Seed;
-  templates?: DiagramTemplateConfig[];
 };
 
 /* ---------------------------------------------------------------- profile */
@@ -202,10 +192,13 @@ export type RunFact = {
 /**
  * The mocked upstream result a run carries, plus how to present it.
  *
- * This is what branch conditions resolve `{{...}}` against, so the keys must
- * match the operands the profile's own condition nodes reference — Invoice
- * Approval compares `{{ai.amount}}`, the editorial profile
- * `{{draft.readability}}`. Keeping it in config is what lets one engine run both.
+ * `context` keys are `<nodeType>.<output>` — one per property a palette item
+ * declares in its `outputSchema`, e.g. `ai.analyze.amount`. Conditions do not
+ * name those keys directly: the properties panel writes operands as
+ * `{{nodes.<id>.<output>}}` (the only shape it can type, and therefore the only
+ * one that offers `>` and `<`), and the engine maps the id through the node on
+ * the canvas. Keeping both sides in config is what lets one engine run every
+ * profile.
  */
 export type RunConfig = {
   context: Record<string, unknown>;
@@ -219,8 +212,8 @@ export type ProfileMeta = {
   icon: string;
   chrome: {
     documentTitle: string;
-    productName: string;
-    tagline?: string;
+    /** The bar's only brand line, set as a small wordmark next to the logo. */
+    tagline: string;
     nav: { id: string; label: string; icon: string }[];
   };
   statusVocabulary?: StatusVocabularyEntry[];
@@ -253,7 +246,6 @@ export type CompiledProfile = {
   nodeTypes: PaletteItemOrGroup[];
   initialNodes: WorkflowBuilderNode[];
   initialEdges: WorkflowBuilderEdge[];
-  diagramTemplates: TemplateModel[];
   translations: ProfileMeta['translations'];
   /** Powers the Studio's "which JSON produced this node?" lookup. */
   nodeIndex: Map<string, NodeConfig>;

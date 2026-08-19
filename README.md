@@ -29,8 +29,8 @@ npm run build && npm run preview   # the mock config API works here too
 |---|---|
 | `config/profiles/<id>/theme.json` | design tokens — keyed by the SDK's **real** custom-property names, split `base` / `light` / `dark`, plus `inspector` (which tokens get live controls) |
 | `config/profiles/<id>/palette.json` | node types **and** their property-panel schemas: JSON Schema `properties`, `required`, `allOf` conditional validation, JSON Forms `ui.elements` with `rule` show/hide |
-| `config/profiles/<id>/workflow.json` | the seeded diagram + selectable templates |
-| `config/profiles/<id>/profile.json` | chrome (product name, nav), status vocabulary, `taskFields`, `run` (mock context + task fact sheet) |
+| `config/profiles/<id>/workflow.json` | the seeded diagram |
+| `config/profiles/<id>/profile.json` | chrome (document title, tagline, nav), status vocabulary, `taskFields`, `run` (mock context + task fact sheet) |
 | `vite-plugins/config-api.ts` | stands in for the config backend: `GET /api/profiles`, `/:id` (assembles the four files), `/:id/:part`. Visible in the Network tab — the config genuinely arrives over HTTP |
 | `src/config/` | the contract (`types.ts`), the loader, the compiler, the token engine |
 | `src/studio/` | Config Studio — edit the tokens and the schema at runtime |
@@ -46,7 +46,7 @@ Nothing is `import`ed from `config/`; nothing lives in `public/`.
    timeline all move together, because the shell consumes the same `--ax-*`
    tokens as the canvas. *Copy theme.json* hands back the file a backend would serve.
 2. **Swap the profile.** One dropdown changes the palette, the icons, the node
-   shapes, the seeded diagram, the panel fields, the nav labels, the brand, the
+   shapes, the seeded diagram, the panel fields, the nav labels, the tagline, the
    font, the radii and the colour mode.
 3. **Tighten a schema at runtime.** Config Studio → *Schema* → on
    `approval.human` set `thresholdAmount`'s `"minimum"` to `5000` (above the
@@ -73,8 +73,8 @@ Being straight about the boundary is the point of the demo.
 string); the built-in node looks via `templateType` (`start-node`,
 `decision-node` and the plain `node` are on the canvas); the whole properties panel
 (11 controls, 4 layouts, `rule` show/hide/enable/disable); conditional validation
-via `allOf`; the seeded diagram and templates; layout direction; the nav, brand
-and status vocabulary; the mocked run context and the task fact sheet.
+via `allOf`; the seeded diagram; layout direction; the nav, the
+tagline and the status vocabulary; the mocked run context and the task fact sheet.
 
 **Code, but the *choice* stays in data:** `src/renderers/currencyAmount.tsx` is a
 custom JSON Forms control. Which field uses it is one key in `palette.json`:
@@ -86,7 +86,10 @@ custom JSON Forms control. Which field uses it is one key in `palette.json`:
 
 **Code, unavoidably:** custom node/edge templates, plugins, `isValidConnection`,
 and anything beyond light/dark — `setTheme` accepts only `'dark' | 'light'`;
-everything else is CSS custom properties.
+everything else is CSS custom properties. *Removing* built-in UI is code too: the
+palette renders its footer unconditionally, so taking the **Templates** button out
+is a CSS rule in `src/styles/app.css`, not a config key. The data it consumed was
+data; the button was not.
 
 ## Notes for whoever picks this up
 
@@ -96,6 +99,21 @@ everything else is CSS custom properties.
   Custom properties also resolve on the element that declares them, so
   overriding a primitive on a wrapper `<div>` changes nothing above it. See the
   long comment in `src/config/theme.ts`.
+- **Dark mode dims the status tones on purpose.** Every pill in the shell — node
+  run badges, the Tasks and Executions chips, the step list, the nav count — reads
+  one palette, `--tone-*` in `src/styles/tokens.css`. Light mode takes the SDK's
+  chip tokens verbatim; dark mode does not, because there they resolve to the
+  `-300` accent step and glow against a near-black node. The dark values mix the
+  same accent toward the body text colour, so the hue (and any brand override)
+  still comes from the design system while the chroma comes down. Change the mix
+  in one place, not in three stylesheets.
+- **The light/dark switch borrows the SDK's tokens, not its component.** The
+  icon switch from `WorkflowBuilder.TopBar` is not exported, and we replaced that
+  bar with our own header. `src/app/ThemeSwitch.tsx` re-creates it in markup and
+  styles it entirely from the `--ax-public-icon-switch-*` tokens the SDK declares
+  on `:root`, so it matches the official demo and repaints with the brand — the
+  thumb resolves to `--ax-colors-acc1-600`, which is teal in one profile and
+  magenta in the other.
 - **`nodeTypes` must be a stable reference.** An inline literal overwrites the
   SDK's module-level palette holder on every parent render. `useProfileRuntime`
   memoises on the profile *object* and logs every identity change in dev — one
@@ -124,8 +142,13 @@ everything else is CSS custom properties.
 
 ## Deliberately out of scope
 
-Real Temporal, real AI, real payments, auth, a backend, persistence. `Save` logs
-the diagram JSON to the console — the payload is the deliverable. Run state is
+Real Temporal, real AI, real payments, auth, a backend, persistence. The palette's
+**Templates** selector is gone: `workflow.json`'s seed already makes the point that
+the diagram is data, and the SDK's selector always offers an *Empty canvas* tile —
+one stray click from wiping the seeded run mid-demo. There is no
+`Save` button: with no backend behind it, `actions.save()` only logged the diagram
+JSON to the console, and Config Studio's *Diagram* tab already hands back the same
+payload — `getStoreDataForIntegration()`, with a Copy button. Run state is
 in-memory, so a reload clears it.
 
 Runs and tasks are **scoped to the profile that started them**: each profile has

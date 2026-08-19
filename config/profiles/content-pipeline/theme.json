@@ -5,9 +5,9 @@
     "--ax-colors-acc1-600": "#a21caf",
     "--ax-colors-acc1-400": "#e879f9",
     "--wb-font-family": "\"IBM Plex Mono\", ui-monospace, SFMono-Regular, monospace",
-    "--ax-token-radius-shell": "2px",
+    "--ax-token-radius-shell": "14px",
     "--ax-token-radius-node-head": "0px",
-    "--ax-public-node-width": "21rem",
+    "--ax-public-node-width": "17rem",
     "--wb-transition": "0s"
   },
   "light": {

@@ -6,8 +6,13 @@ import { createRoot } from 'react-dom/client';
 import '@workflowbuilder/sdk/style.css';
 import './styles/tokens.css';
 import './styles/app.css';
+// Primitives before the screens that place them, so a screen can still nudge one.
+import './styles/components.css';
 import './styles/views.css';
 import './styles/studio.css';
+
+// Before the app, so the SDK's i18next resources are patched by first render.
+import './wb/i18n';
 
 import App from './app/App';
 
