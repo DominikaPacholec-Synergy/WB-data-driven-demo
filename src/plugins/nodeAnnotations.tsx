@@ -40,7 +40,7 @@ const TONE: Record<NodeRunStatus, { tone: string; icon: WBIcon; label: string }>
  */
 type SlotProps = { props: { nodeId: string } };
 
-function NodeAnnotations({ props: { nodeId } }: SlotProps) {
+const NodeAnnotations = ({ props: { nodeId } }: SlotProps) => {
   /*
    * Both selectors MUST return scalars. Returning an object would mint a new
    * identity on every store notification and loop the render.
@@ -85,7 +85,7 @@ function NodeAnnotations({ props: { nodeId } }: SlotProps) {
       ) : null}
     </>
   );
-}
+};
 
 /**
  * Module-level guard. `plugins` run on every `<Root>` mount and StrictMode

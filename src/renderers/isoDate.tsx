@@ -35,7 +35,7 @@ const optionsOf = (uischema: unknown): Options =>
  * Accepts what the SDK's DatePicker may already have written, so switching a field
  * over does not blank a value someone picked before this renderer existed.
  */
-function toIsoDay(raw: unknown): string {
+const toIsoDay = (raw: unknown): string => {
   if (typeof raw !== 'string' || raw === '') return '';
   if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
 
@@ -49,9 +49,9 @@ function toIsoDay(raw: unknown): string {
    */
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}`;
-}
+};
 
-function IsoDateControl({
+const IsoDateControl = ({
   data,
   handleChange,
   path,
@@ -60,7 +60,7 @@ function IsoDateControl({
   visible,
   errors,
   schema,
-}: ControlProps) {
+}: ControlProps) => {
   /*
    * The SDK's field schemas carry `label`, whereas JsonForms derives its own `label`
    * prop from `title` / the property path. Reading `schema.label` first keeps this
@@ -94,7 +94,7 @@ function IsoDateControl({
       {errors ? <p className="isodate__error">{errors}</p> : null}
     </div>
   );
-}
+};
 
 /**
  * Rank 20 so it outranks the SDK's own DatePicker for this one field. Same rank as

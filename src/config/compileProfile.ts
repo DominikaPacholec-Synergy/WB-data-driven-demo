@@ -52,7 +52,7 @@ const PRESET_PROPERTIES = {
  * node type is guaranteed to declare the mandatory `label` + `description`
  * properties without the config author having to remember them.
  */
-function buildSchema(node: NodeConfig) {
+const buildSchema = (node: NodeConfig) => {
   return {
     type: 'object' as const,
     properties: {
@@ -63,7 +63,7 @@ function buildSchema(node: NodeConfig) {
     ...(node.required ? { required: node.required } : {}),
     ...(node.allOf ? { allOf: node.allOf } : {}),
   };
-}
+};
 
 /* --------------------------------------------------------------- captions */
 
@@ -115,10 +115,10 @@ type UiElement = {
  * `HorizontalLayout`. Whatever the element already states wins — per key — so a
  * config can still override one placement's wording without moving the rest.
  */
-function withResolvedCaptions(
+const withResolvedCaptions = (
   element: unknown,
   properties: Record<string, FieldSchemaConfig>,
-): unknown {
+): unknown => {
   if (element === null || typeof element !== 'object') return element;
   const el = element as UiElement;
 
@@ -134,7 +134,7 @@ function withResolvedCaptions(
     el[key] === undefined && typeof field?.[key] === 'string' ? { [key]: field[key] } : {};
 
   return { ...walked, ...inherit('label'), ...inherit('placeholder') };
-}
+};
 
 /**
  * `generalInformation` is the SDK's ready-made Title/Status/Description
@@ -144,7 +144,7 @@ function withResolvedCaptions(
  * Only the config's own elements go through `withResolvedCaptions`; the two SDK
  * fragments already carry the captions they want.
  */
-function buildUiSchema(node: NodeConfig) {
+const buildUiSchema = (node: NodeConfig) => {
   const preset = node.ui?.preset ?? 'general';
   const properties = node.properties ?? {};
   const elements: unknown[] = [
@@ -153,18 +153,18 @@ function buildUiSchema(node: NodeConfig) {
     ...(node.ui?.globalControls === false ? [] : globalControls),
   ];
   return { type: 'VerticalLayout', elements };
-}
+};
 
-function buildDefaults(node: NodeConfig) {
+const buildDefaults = (node: NodeConfig) => {
   return {
     label: node.label,
     description: node.description,
     ...(usesGeneralPreset(node) ? { type: node.type, status: statusOptions.active.value } : {}),
     ...(node.defaults ?? {}),
   };
-}
+};
 
-export function buildPaletteItem(node: NodeConfig): PaletteItem {
+export const buildPaletteItem = (node: NodeConfig): PaletteItem => {
   return {
     type: node.type,
     label: node.label,
@@ -176,7 +176,7 @@ export function buildPaletteItem(node: NodeConfig): PaletteItem {
     defaultPropertiesData: buildDefaults(node),
     ...(node.outputSchema ? { outputSchema: node.outputSchema } : {}),
   } as unknown as PaletteItem;
-}
+};
 
 /* ------------------------------------------------------------------- seed */
 
@@ -190,7 +190,7 @@ export function buildPaletteItem(node: NodeConfig): PaletteItem {
  * We register no custom node templates, so `node.type` is always the
  * `templateType`. Note the SDK does NOT copy `templateType` into `data`.
  */
-function buildNode(seed: SeedNode, index: Map<string, NodeConfig>): WorkflowBuilderNode {
+const buildNode = (seed: SeedNode, index: Map<string, NodeConfig>): WorkflowBuilderNode => {
   const def = index.get(seed.nodeType);
   if (!def) {
     throw new ProfileError(
@@ -209,10 +209,10 @@ function buildNode(seed: SeedNode, index: Map<string, NodeConfig>): WorkflowBuil
       properties: { ...buildDefaults(def), ...(seed.properties ?? {}) },
     },
   } as unknown as WorkflowBuilderNode;
-}
+};
 
 /** Inner handle ids look like `source:inner:<branchId>` — see `getHandleId()`. */
-function buildEdge(edge: SeedEdge): WorkflowBuilderEdge {
+const buildEdge = (edge: SeedEdge): WorkflowBuilderEdge => {
   return {
     id: edge.id,
     source: edge.source,
@@ -223,18 +223,18 @@ function buildEdge(edge: SeedEdge): WorkflowBuilderEdge {
       ? { data: { ...(edge.label ? { label: edge.label } : {}), ...(edge.icon ? { icon: edge.icon } : {}) } }
       : {}),
   } as unknown as WorkflowBuilderEdge;
-}
+};
 
-function compileSeed(seed: Seed, index: Map<string, NodeConfig>) {
+const compileSeed = (seed: Seed, index: Map<string, NodeConfig>) => {
   return {
     nodes: seed.nodes.map((n) => buildNode(n, index)),
     edges: seed.edges.map(buildEdge),
   };
-}
+};
 
 /* ---------------------------------------------------------------- profile */
 
-export function compileProfile(profile: EditorProfile): CompiledProfile {
+export const compileProfile = (profile: EditorProfile): CompiledProfile => {
   const nodeIndex = new Map<string, NodeConfig>();
 
   const remember = (node: NodeConfig) => {
@@ -268,4 +268,4 @@ export function compileProfile(profile: EditorProfile): CompiledProfile {
     nodeIndex,
     source: profile,
   };
-}
+};

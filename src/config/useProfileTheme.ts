@@ -14,11 +14,11 @@ import type { ThemeConfig } from './types';
  * stale keys, and clearing would flash the SDK's default palette for one frame
  * during a swap.
  */
-export function useProfileTheme(theme: ThemeConfig | undefined): void {
+export const useProfileTheme = (theme: ThemeConfig | undefined): void => {
   useEffect(() => {
     if (!theme) return;
     setMode(theme.defaultMode);
     applyTheme(theme, theme.defaultMode);
     return watchThemeMode((mode) => applyTheme(theme, mode));
   }, [theme]);
-}
+};

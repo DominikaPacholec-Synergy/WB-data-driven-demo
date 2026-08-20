@@ -31,7 +31,7 @@ const captionOf = (uischema: ControlProps['uischema'], schema: ControlProps['sch
   return typeof fromSchema === 'string' ? fromSchema : label;
 };
 
-function SwitchControl({
+const SwitchControl = ({
   data,
   handleChange,
   path,
@@ -42,7 +42,7 @@ function SwitchControl({
   visible,
   required,
   errors,
-}: ControlProps) {
+}: ControlProps) => {
   if (visible === false) return null;
 
   return (
@@ -55,7 +55,7 @@ function SwitchControl({
       error={errors || undefined}
     />
   );
-}
+};
 
 export const switchFieldRenderer: JsonFormsRendererRegistryEntry = {
   tester: rankWith(20, uiTypeIs('Switch')),

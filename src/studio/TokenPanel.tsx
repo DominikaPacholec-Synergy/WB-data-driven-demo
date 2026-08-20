@@ -1,53 +1,45 @@
-import { useRef, useState } from 'react';
+import { useRef, useState } from "react";
 
-import { Dropdown } from '../components/Dropdown';
+import { Dropdown } from "../components/Dropdown";
 import {
   exportThemePatch,
   hasOverrides,
   readToken,
   resetAllOverrides,
   setTokenOverride,
-} from '../config/theme';
-import type { ThemeConfig, TokenControl } from '../config/types';
-import { useThemeMode } from '../config/useThemeMode';
+} from "../config/theme";
+import type { ThemeConfig, TokenControl } from "../config/types";
+import { useThemeMode } from "../config/useThemeMode";
 
 /**
  * Live design-token controls, generated from `theme.json`'s `inspector` block.
- *
- * Nothing here knows what a "brand colour" is. The panel walks a list of token
- * names the config chose to expose and renders a widget per `kind` — so adding
- * a knob is a JSON edit, exactly like everything else in this demo.
- *
- * THE STABILITY RULE (see useProfileRuntime): a token edit must NOT become React
- * state. Re-rendering this component's ancestors would hand the SDK a fresh
- * `nodeTypes` array identity on every slider frame, overwriting its module-level
- * palette holder. So the inputs are uncontrolled, the value readout is written
- * straight to the DOM through a ref, and `setTokenOverride` writes to
- * `document.documentElement`. Zero renders per frame, by construction.
  */
 
 type Props = { theme: ThemeConfig };
 
 /** `<input type="color">` accepts only `#rrggbb`, so normalise whatever CSS gave us. */
-function toHexColor(value: string): string {
+const toHexColor = (value: string): string => {
   const raw = value.trim();
   if (/^#[0-9a-f]{6}$/i.test(raw)) return raw.toLowerCase();
   if (/^#[0-9a-f]{3}$/i.test(raw)) {
-    return `#${[...raw.slice(1)].map((c) => c + c).join('')}`.toLowerCase();
+    return `#${[...raw.slice(1)].map((c) => c + c).join("")}`.toLowerCase();
   }
   const channels = raw.match(/^rgba?\(([^)]+)\)$/i);
   if (channels) {
-    const [r, g, b] = channels[1].split(/[,\s/]+/).filter(Boolean).map(Number);
+    const [r, g, b] = channels[1]
+      .split(/[,\s/]+/)
+      .filter(Boolean)
+      .map(Number);
     if ([r, g, b].every(Number.isFinite)) {
       const hex = (n: number) =>
         Math.max(0, Math.min(255, Math.round(n)))
           .toString(16)
-          .padStart(2, '0');
+          .padStart(2, "0");
       return `#${hex(r)}${hex(g)}${hex(b)}`;
     }
   }
-  return '#000000';
-}
+  return "#000000";
+};
 
 /**
  * The font token in `base` reads `"Poppins", system-ui, -apple-system, sans-serif`
@@ -55,30 +47,50 @@ function toHexColor(value: string): string {
  * Matching on the first family keeps the dropdown in sync without forcing the
  * config author to keep two strings byte-identical.
  */
-function matchOption(current: string, options: { value: string }[]): string | undefined {
+const matchOption = (
+  current: string,
+  options: { value: string }[],
+): string | undefined => {
   const exact = options.find((option) => option.value === current);
   if (exact) return exact.value;
-  const head = (value: string) => value.split(',')[0].replace(/["']/g, '').trim().toLowerCase();
+  const head = (value: string) =>
+    value.split(",")[0].replace(/["']/g, "").trim().toLowerCase();
   return options.find((option) => head(option.value) === head(current))?.value;
-}
+};
 
-function ColorControl({ control, onEdit }: { control: TokenControl; onEdit: () => void }) {
+const ColorControl = ({
+  control,
+  onEdit,
+}: {
+  control: TokenControl;
+  onEdit: () => void;
+}) => {
   return (
     <input
       type="color"
       defaultValue={toHexColor(readToken(control.token))}
       onInput={(event) => {
-        setTokenOverride(control.token, event.currentTarget.value, control.bucket);
+        setTokenOverride(
+          control.token,
+          event.currentTarget.value,
+          control.bucket,
+        );
         onEdit();
       }}
     />
   );
-}
+};
 
-function LengthControl({ control, onEdit }: { control: TokenControl; onEdit: () => void }) {
+const LengthControl = ({
+  control,
+  onEdit,
+}: {
+  control: TokenControl;
+  onEdit: () => void;
+}) => {
   // Hook before the guard: hook order must not depend on a prop.
   const readout = useRef<HTMLSpanElement>(null);
-  if (control.kind !== 'length') return null;
+  if (control.kind !== "length") return null;
   const initial = Number.parseFloat(readToken(control.token)) || control.min;
 
   return (
@@ -103,20 +115,10 @@ function LengthControl({ control, onEdit }: { control: TokenControl; onEdit: () 
       </span>
     </div>
   );
-}
+};
 
 /** Shown while the live token matches none of the exposed options. */
-const FROM_THEME = { value: '', label: 'From theme.json' };
-
-/*
- * Two components rather than one so the guard can stay above the hook: the
- * sibling controls narrow `TokenControl` with an early return, and this is the
- * only one that needs state, which must not sit behind a conditional return.
- */
-function ChoiceControl({ control, onEdit }: { control: TokenControl; onEdit: () => void }) {
-  if (control.kind !== 'choice') return null;
-  return <ChoiceDropdown control={control} onEdit={onEdit} />;
-}
+const FROM_THEME = { value: "", label: "From theme.json" };
 
 /*
  * The one control on this panel that holds state, and the stability rule
@@ -129,13 +131,13 @@ function ChoiceControl({ control, onEdit }: { control: TokenControl; onEdit: () 
  * Reset still works through the `generation` key on the list: remounting re-runs
  * `readToken`, and the initialiser picks the restored value up.
  */
-function ChoiceDropdown({
+const ChoiceDropdown = ({
   control,
   onEdit,
 }: {
-  control: Extract<TokenControl, { kind: 'choice' }>;
+  control: Extract<TokenControl, { kind: "choice" }>;
   onEdit: () => void;
-}) {
+}) => {
   const live = matchOption(readToken(control.token), control.options);
   const [value, setValue] = useState(live ?? FROM_THEME.value);
 
@@ -143,7 +145,9 @@ function ChoiceDropdown({
     <Dropdown
       size="small"
       value={value}
-      options={live === undefined ? [FROM_THEME, ...control.options] : control.options}
+      options={
+        live === undefined ? [FROM_THEME, ...control.options] : control.options
+      }
       onChange={(next) => {
         setValue(next);
         setTokenOverride(control.token, next, control.bucket);
@@ -152,9 +156,25 @@ function ChoiceDropdown({
       aria-label={control.label}
     />
   );
-}
+};
 
-export function TokenPanel({ theme }: Props) {
+/*
+ * Two components rather than one so the guard can stay above the hook: the
+ * sibling controls narrow `TokenControl` with an early return, and this is the
+ * only one that needs state, which must not sit behind a conditional return.
+ */
+const ChoiceControl = ({
+  control,
+  onEdit,
+}: {
+  control: TokenControl;
+  onEdit: () => void;
+}) => {
+  if (control.kind !== "choice") return null;
+  return <ChoiceDropdown control={control} onEdit={onEdit} />;
+};
+
+export const TokenPanel = ({ theme }: Props) => {
   const mode = useThemeMode();
   const [dirty, setDirty] = useState(hasOverrides());
   const [copied, setCopied] = useState(false);
@@ -166,7 +186,9 @@ export function TokenPanel({ theme }: Props) {
   const onEdit = () => setDirty(true);
 
   const copy = async () => {
-    await navigator.clipboard.writeText(JSON.stringify(exportThemePatch(), null, 2));
+    await navigator.clipboard.writeText(
+      JSON.stringify(exportThemePatch(), null, 2),
+    );
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1600);
   };
@@ -174,8 +196,9 @@ export function TokenPanel({ theme }: Props) {
   return (
     <div className="studio__panel">
       <p className="studio__lede">
-        Every control below is one entry in <code>theme.json</code>. The names are the design
-        system's own custom properties — no aliases, no translation layer.
+        Every control below is one entry in <code>theme.json</code>. The names
+        are the design system's own custom properties — no aliases, no
+        translation layer.
       </p>
 
       {/*
@@ -192,12 +215,12 @@ export function TokenPanel({ theme }: Props) {
               <label className="studio__control" key={control.token}>
                 <span className="studio__label">
                   {control.label}
-                  {control.bucket === 'mode' ? <em> · {mode}</em> : null}
+                  {control.bucket === "mode" ? <em> · {mode}</em> : null}
                 </span>
                 <code className="studio__token">{control.token}</code>
-                {control.kind === 'color' ? (
+                {control.kind === "color" ? (
                   <ColorControl control={control} onEdit={onEdit} />
-                ) : control.kind === 'length' ? (
+                ) : control.kind === "length" ? (
                   <LengthControl control={control} onEdit={onEdit} />
                 ) : (
                   <ChoiceControl control={control} onEdit={onEdit} />
@@ -210,7 +233,7 @@ export function TokenPanel({ theme }: Props) {
 
       <footer className="studio__footer">
         <button type="button" onClick={() => void copy()}>
-          {copied ? 'Copied' : 'Copy theme.json'}
+          {copied ? "Copied" : "Copy theme.json"}
         </button>
         <button
           type="button"
@@ -225,8 +248,9 @@ export function TokenPanel({ theme }: Props) {
         </button>
       </footer>
       <p className="studio__hint">
-        “Copy theme.json” gives you the exact file a backend would serve. What you dragged is data.
+        “Copy theme.json” gives you the exact file a backend would serve. What
+        you dragged is data.
       </p>
     </div>
   );
-}
+};

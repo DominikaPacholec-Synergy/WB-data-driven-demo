@@ -89,16 +89,16 @@ type RunState = {
   clear: () => void;
 };
 
-export function stamp(): string {
+export const stamp = (): string => {
   return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-}
+};
 
 /** Immutable per-execution patch — zustand needs a fresh object to notify. */
-function patch(state: RunState, execId: string, change: (execution: Execution) => Execution) {
+const patch = (state: RunState, execId: string, change: (execution: Execution) => Execution) => {
   const execution = state.executions[execId];
   if (!execution) return state;
   return { ...state, executions: { ...state.executions, [execId]: change(execution) } };
-}
+};
 
 export const useRunStore = create<RunState>((set) => ({
   executions: {},

@@ -46,15 +46,15 @@ let runContext: Record<string, unknown> = {};
 /** Which profile's diagram is currently loaded. Stamped onto every run. */
 let activeProfileId = '';
 
-export function configureRun(
+export const configureRun = (
   profileId: string,
   map: TaskFieldMap | undefined,
   context: Record<string, unknown> | undefined,
-): void {
+): void => {
   activeProfileId = profileId;
   taskFields = map ?? {};
   runContext = context ?? {};
-}
+};
 
 type Props = Record<string, unknown>;
 
@@ -109,12 +109,12 @@ type DecisionBranch = {
  * through the live store: one context entry serves the seeded node AND one you
  * just dropped from the palette, which has an id no config could have known.
  */
-function contextKey(template: string): string {
+const contextKey = (template: string): string => {
   const scoped = /^nodes\.([^.]+)\.(.+)$/.exec(template);
   if (!scoped) return template;
   const node = getStoreNodes().find((candidate) => candidate.id === scoped[1]);
   return node ? `${paletteTypeOf(node)}.${scoped[2]}` : template;
-}
+};
 
 const lookup = (template: string, context: Record<string, unknown>): unknown => {
   const key = contextKey(template.trim());
@@ -122,21 +122,21 @@ const lookup = (template: string, context: Record<string, unknown>): unknown => 
 };
 
 /** `"{{nodes.n2.amount}}"` → the run context value. Operands are templates, not names. */
-function resolveOperand(raw: string, context: Record<string, unknown>): unknown {
+const resolveOperand = (raw: string, context: Record<string, unknown>): unknown => {
   const whole = /^\s*\{\{\s*([^}]+?)\s*\}\}\s*$/.exec(raw);
   if (whole) return lookup(whole[1], context);
   // Mixed text: interpolate, then let coercion decide if it is a number.
   return raw.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (_, key: string) => String(lookup(key, context) ?? ''));
-}
+};
 
-function coerce(value: unknown): number | string | boolean {
+const coerce = (value: unknown): number | string | boolean => {
   if (typeof value === 'number' || typeof value === 'boolean') return value;
   const text = String(value ?? '').trim();
   if (text !== '' && Number.isFinite(Number(text))) return Number(text);
   return text;
-}
+};
 
-function compare(left: unknown, operator: string, right: unknown): boolean {
+const compare = (left: unknown, operator: string, right: unknown): boolean => {
   const l = coerce(left);
   const r = coerce(right);
   const numeric = typeof l === 'number' && typeof r === 'number';
@@ -165,13 +165,13 @@ function compare(left: unknown, operator: string, right: unknown): boolean {
     default:
       return false;
   }
-}
+};
 
 /**
  * `logicalOperator` joins a condition with the NEXT one (per the SDK's type
  * docs), so folding left uses the PREDECESSOR's operator to combine.
  */
-function evaluate(conditions: Condition[], context: Record<string, unknown>): boolean {
+const evaluate = (conditions: Condition[], context: Record<string, unknown>): boolean => {
   return conditions.reduce((accumulated, condition, index) => {
     const result = compare(
       resolveOperand(condition.x, context),
@@ -182,16 +182,16 @@ function evaluate(conditions: Condition[], context: Record<string, unknown>): bo
     const joiner = String(conditions[index - 1].logicalOperator ?? 'AND').toUpperCase();
     return joiner === 'OR' ? accumulated || result : accumulated && result;
   }, true);
-}
+};
 
 /**
  * First branch whose conditions hold. A branch with no conditions is the
  * default — that is how the seeded "Auto-approve" branch is authored.
  */
-function pickBranch(
+const pickBranch = (
   node: WorkflowBuilderNode,
   context: Record<string, unknown>,
-): DecisionBranch | undefined {
+): DecisionBranch | undefined => {
   const branches = branchesOf(node);
   const matched = branches.find(
     (branch) => branch.conditions?.length && evaluate(branch.conditions, context),
@@ -201,44 +201,76 @@ function pickBranch(
     branches.find((branch) => !branch.conditions?.length) ??
     branches[branches.length - 1]
   );
-}
+};
 
 /* ------------------------------------------------------------------ graph */
 
-function outgoing(
+const outgoing = (
   edges: WorkflowBuilderEdge[],
   nodeId: string,
   branchId?: string,
-): WorkflowBuilderEdge[] {
+): WorkflowBuilderEdge[] => {
   return edges.filter((edge) => {
     if (edge.source !== nodeId) return false;
     if (branchId === undefined) return true;
     return edge.sourceHandle?.endsWith(`:inner:${branchId}`) ?? false;
   });
-}
+};
 
 /** The start node: `templateType === 'start-node'`, else whatever has no input. */
-function findStart(
+const findStart = (
   nodes: WorkflowBuilderNode[],
   edges: WorkflowBuilderEdge[],
-): WorkflowBuilderNode | undefined {
+): WorkflowBuilderNode | undefined => {
   return (
     nodes.find((node) => node.type === 'start-node') ??
     nodes.find((node) => !edges.some((edge) => edge.target === node.id))
   );
-}
+};
 
 /* ----------------------------------------------------------------- engine */
 
-function later(run: () => void) {
+const later = (run: () => void) => {
   const timer = setTimeout(() => {
     timers.delete(timer);
     run();
   }, STEP_DELAY_MS);
   timers.add(timer);
-}
+};
 
-function advance(execId: string, nodeId: string) {
+/** Reads a task field through the profile's name mapping. */
+const taskField = (properties: Props, role: keyof TaskFieldMap): unknown => {
+  const name = taskFields[role];
+  return name ? properties[name] : undefined;
+};
+
+/** The suspension point. A task is created and the engine stops — no timer. */
+const suspend = (execId: string, node: WorkflowBuilderNode) => {
+  const store = useRunStore.getState();
+  const properties = propertiesOf(node);
+
+  const assignee = String(taskField(properties, 'assignee') ?? 'Unassigned');
+  const rejectFlag = taskField(properties, 'allowReject');
+
+  store.setNodeStatus(execId, node.id, 'waiting');
+  store.setStatus(execId, 'waiting');
+  store.createTask({
+    id: `${execId}:${node.id}`,
+    profileId: store.executions[execId]?.profileId ?? activeProfileId,
+    execId,
+    nodeId: node.id,
+    title: `${labelOf(node)} #${execId}`,
+    assignee,
+    priority: String(taskField(properties, 'priority') ?? 'normal'),
+    dueAfterHours: Number(taskField(properties, 'dueHours') ?? 24),
+    // No mapped flag means the profile never disables Reject.
+    allowReject: rejectFlag === undefined ? true : rejectFlag !== false,
+    reviewerNote: String(taskField(properties, 'note') ?? ''),
+  });
+  store.log(execId, 'Human task created', `Assigned to ${assignee}`);
+};
+
+const advance = (execId: string, nodeId: string) => {
   const store = useRunStore.getState();
   const execution = store.executions[execId];
   if (!execution) return;
@@ -290,41 +322,9 @@ function advance(execId: string, nodeId: string) {
       live.log(execId, 'Workflow completed');
     }
   });
-}
+};
 
-/** Reads a task field through the profile's name mapping. */
-function taskField(properties: Props, role: keyof TaskFieldMap): unknown {
-  const name = taskFields[role];
-  return name ? properties[name] : undefined;
-}
-
-/** The suspension point. A task is created and the engine stops — no timer. */
-function suspend(execId: string, node: WorkflowBuilderNode) {
-  const store = useRunStore.getState();
-  const properties = propertiesOf(node);
-
-  const assignee = String(taskField(properties, 'assignee') ?? 'Unassigned');
-  const rejectFlag = taskField(properties, 'allowReject');
-
-  store.setNodeStatus(execId, node.id, 'waiting');
-  store.setStatus(execId, 'waiting');
-  store.createTask({
-    id: `${execId}:${node.id}`,
-    profileId: store.executions[execId]?.profileId ?? activeProfileId,
-    execId,
-    nodeId: node.id,
-    title: `${labelOf(node)} #${execId}`,
-    assignee,
-    priority: String(taskField(properties, 'priority') ?? 'normal'),
-    dueAfterHours: Number(taskField(properties, 'dueHours') ?? 24),
-    // No mapped flag means the profile never disables Reject.
-    allowReject: rejectFlag === undefined ? true : rejectFlag !== false,
-    reviewerNote: String(taskField(properties, 'note') ?? ''),
-  });
-  store.log(execId, 'Human task created', `Assigned to ${assignee}`);
-}
-
-export function startRun(workflowName: string): string | null {
+export const startRun = (workflowName: string): string | null => {
   const nodes = getStoreNodes();
   const edges = getStoreEdges();
   const start = findStart(nodes, edges);
@@ -345,7 +345,7 @@ export function startRun(workflowName: string): string | null {
 
   advance(execId, start.id);
   return execId;
-}
+};
 
 /**
  * Resume. Approve continues along the node's outgoing edge; reject ends the run.
@@ -355,7 +355,7 @@ export function startRun(workflowName: string): string | null {
  * rejection is a terminal state, not a detour, and the run is marked `rejected`
  * rather than silently "completed".
  */
-export function resolveTask(taskId: string, decision: 'approve' | 'reject', comment?: string) {
+export const resolveTask = (taskId: string, decision: 'approve' | 'reject', comment?: string) => {
   const store = useRunStore.getState();
   const task = store.tasks[taskId];
   if (!task || task.status !== 'pending') return;
@@ -394,10 +394,10 @@ export function resolveTask(taskId: string, decision: 'approve' | 'reject', comm
     store.setStatus(execId, 'completed');
     store.log(execId, 'Workflow completed');
   }
-}
+};
 
 /** Clears pending timers. Called when the builder unmounts or a profile swaps. */
-export function disposeEngine() {
+export const disposeEngine = () => {
   for (const timer of timers) clearTimeout(timer);
   timers.clear();
-}
+};

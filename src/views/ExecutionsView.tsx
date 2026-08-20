@@ -1,27 +1,18 @@
-import { useState } from 'react';
-import { Icon, type WBIcon } from '@workflowbuilder/sdk';
+import { useState } from "react";
+import { Icon, type WBIcon } from "@workflowbuilder/sdk";
 
-import { useRunStore, type Execution } from '../run/store';
-import { StatusPill } from './StatusPill';
-
-/**
- * "What is happening with this particular run?" — as opposed to the builder,
- * which answers "how should the workflow work?".
- *
- * The step list and the audit log are the two halves that explain durable
- * execution visually: a run can sit at `Waiting for human` indefinitely, and the
- * timeline shows both the gap and what resumed it.
- */
+import { useRunStore, type Execution } from "../run/store";
+import { StatusPill } from "./StatusPill";
 
 const STEP_ICON: Record<string, { icon: WBIcon; tone: string }> = {
-  done: { icon: 'CheckCircle', tone: 'ok' },
-  running: { icon: 'CircleNotch', tone: 'info' },
-  waiting: { icon: 'Clock', tone: 'warn' },
-  rejected: { icon: 'XCircle', tone: 'danger' },
-  skipped: { icon: 'MinusCircle', tone: 'muted' },
+  done: { icon: "CheckCircle", tone: "ok" },
+  running: { icon: "CircleNotch", tone: "info" },
+  waiting: { icon: "Clock", tone: "warn" },
+  rejected: { icon: "XCircle", tone: "danger" },
+  skipped: { icon: "MinusCircle", tone: "muted" },
 };
 
-function ExecutionDetail({ execution }: { execution: Execution }) {
+const ExecutionDetail = ({ execution }: { execution: Execution }) => {
   return (
     <section className="card">
       <header className="card__head">
@@ -42,8 +33,8 @@ function ExecutionDetail({ execution }: { execution: Execution }) {
               const status = execution.nodeStatus[step.id];
               const view = status ? STEP_ICON[status] : null;
               return (
-                <li key={step.id} data-tone={view?.tone ?? 'pending'}>
-                  <Icon name={view?.icon ?? 'Circle'} size="small" />
+                <li key={step.id} data-tone={view?.tone ?? "pending"}>
+                  <Icon name={view?.icon ?? "Circle"} size="small" />
                   <span>{step.label}</span>
                 </li>
               );
@@ -68,9 +59,9 @@ function ExecutionDetail({ execution }: { execution: Execution }) {
       </div>
     </section>
   );
-}
+};
 
-export function ExecutionsView({ profileId }: { profileId: string }) {
+export const ExecutionsView = ({ profileId }: { profileId: string }) => {
   const allIds = useRunStore((state) => state.order);
   const executions = useRunStore((state) => state.executions);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -102,7 +93,7 @@ export function ExecutionsView({ profileId }: { profileId: string }) {
                 <li key={id}>
                   <button
                     type="button"
-                    className={`list__row${selectedId === id ? ' is-open' : ''}`}
+                    className={`list__row${selectedId === id ? " is-open" : ""}`}
                     onClick={() => setOpenId(id)}
                   >
                     <span className="list__main">
@@ -112,8 +103,9 @@ export function ExecutionsView({ profileId }: { profileId: string }) {
                       <span className="list__meta">
                         {execution.currentNodeId
                           ? `at ${
-                              execution.steps.find((step) => step.id === execution.currentNodeId)
-                                ?.label ?? execution.currentNodeId
+                              execution.steps.find(
+                                (step) => step.id === execution.currentNodeId,
+                              )?.label ?? execution.currentNodeId
                             }`
                           : `started ${execution.startedAt}`}
                       </span>
@@ -130,4 +122,4 @@ export function ExecutionsView({ profileId }: { profileId: string }) {
       )}
     </div>
   );
-}
+};

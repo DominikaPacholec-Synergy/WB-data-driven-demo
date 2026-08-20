@@ -27,10 +27,10 @@ export const useProvenanceStore = create<ProvenanceState>((set) => ({
  */
 let nodeIndex: Map<string, NodeConfig> = new Map();
 
-export function setNodeIndex(index: Map<string, NodeConfig>): void {
+export const setNodeIndex = (index: Map<string, NodeConfig>): void => {
   nodeIndex = index;
-}
+};
 
-export function lookupNodeConfig(type: string): NodeConfig | undefined {
+export const lookupNodeConfig = (type: string): NodeConfig | undefined => {
   return nodeIndex.get(type);
-}
+};

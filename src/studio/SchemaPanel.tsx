@@ -1,19 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
-import { compileProfile } from '../config/compileProfile';
-import { loadProfilePart } from '../config/loadProfile';
-import type { EditorProfile, PaletteConfig } from '../config/types';
+import { compileProfile } from "../config/compileProfile";
+import { loadProfilePart } from "../config/loadProfile";
+import type { EditorProfile, PaletteConfig } from "../config/types";
 
-/**
- * The raw config, as served — and, for the palette, editable in place.
- *
- * This is the panel that makes the claim falsifiable. `palette.json` holds the
- * node types AND their property-panel schemas, so tightening a `minimum` here
- * and pressing Apply re-validates nodes that are already sitting on the canvas.
- * No rebuild, no code change: the editor's rules are data.
- */
-
-const PARTS = ['palette', 'workflow', 'theme', 'profile'] as const;
+const PARTS = ["palette", "workflow", "theme", "profile"] as const;
 type Part = (typeof PARTS)[number];
 
 type Props = {
@@ -21,9 +12,9 @@ type Props = {
   onApplyPalette: (palette: PaletteConfig) => void;
 };
 
-export function SchemaPanel({ profile, onApplyPalette }: Props) {
-  const [part, setPart] = useState<Part>('palette');
-  const [text, setText] = useState('');
+export const SchemaPanel = ({ profile, onApplyPalette }: Props) => {
+  const [part, setPart] = useState<Part>("palette");
+  const [text, setText] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -31,7 +22,7 @@ export function SchemaPanel({ profile, onApplyPalette }: Props) {
     let cancelled = false;
     setStatus(null);
     setFailed(false);
-    setText('');
+    setText("");
     void loadProfilePart(profile.id, part)
       .then((data) => {
         if (!cancelled) setText(JSON.stringify(data, null, 2));
@@ -52,7 +43,7 @@ export function SchemaPanel({ profile, onApplyPalette }: Props) {
       parsed = JSON.parse(text);
     } catch (cause) {
       setFailed(true);
-      setStatus(cause instanceof Error ? cause.message : 'Invalid JSON');
+      setStatus(cause instanceof Error ? cause.message : "Invalid JSON");
       return;
     }
 
@@ -63,7 +54,7 @@ export function SchemaPanel({ profile, onApplyPalette }: Props) {
       return;
     }
 
-    /*
+    /*???
      * Dry-run the compiler before handing the palette upstream. `compileProfile`
      * runs inside a `useMemo` in App, so a ProfileError raised there would take
      * the whole app down mid-render. Catching it here keeps a typo — a duplicate
@@ -80,14 +71,20 @@ export function SchemaPanel({ profile, onApplyPalette }: Props) {
 
     onApplyPalette(palette);
     setFailed(false);
-    setStatus('Applied. The diagram was kept and re-validated against the new schema.');
+    setStatus(
+      "Applied. The diagram was kept and re-validated against the new schema.",
+    );
   };
 
   return (
     <div className="studio__panel">
       <p className="studio__lede">
-        Straight from <code>GET /api/profiles/{profile.id}/{part}</code>. Editing the palette
-        rewrites the node types and their property schemas at runtime.
+        Straight from{" "}
+        <code>
+          GET /api/profiles/{profile.id}/{part}
+        </code>
+        . Editing the palette rewrites the node types and their property schemas
+        at runtime.
       </p>
 
       <div className="studio__subtabs">
@@ -95,7 +92,7 @@ export function SchemaPanel({ profile, onApplyPalette }: Props) {
           <button
             key={entry}
             type="button"
-            className={part === entry ? 'is-active' : undefined}
+            className={part === entry ? "is-active" : undefined}
             onClick={() => setPart(entry)}
           >
             {entry}.json
@@ -107,24 +104,26 @@ export function SchemaPanel({ profile, onApplyPalette }: Props) {
         className="studio__editor"
         spellCheck={false}
         value={text}
-        readOnly={part !== 'palette'}
+        readOnly={part !== "palette"}
         onChange={(event) => setText(event.currentTarget.value)}
       />
 
       {status ? (
-        <p className={failed ? 'studio__status is-error' : 'studio__status'}>{status}</p>
+        <p className={failed ? "studio__status is-error" : "studio__status"}>
+          {status}
+        </p>
       ) : null}
 
       <footer className="studio__footer">
-        <button type="button" disabled={part !== 'palette'} onClick={apply}>
+        <button type="button" disabled={part !== "palette"} onClick={apply}>
           Apply
         </button>
       </footer>
       <p className="studio__hint">
-        {part === 'palette'
+        {part === "palette"
           ? 'Try: on approval.human set thresholdAmount’s "minimum" to 5000 — above the 1000 the node already carries — then Apply and select Human Approval.'
-          : 'Read-only here — this tab shows what the backend serves.'}
+          : "Read-only here — this tab shows what the backend serves."}
       </p>
     </div>
   );
-}
+};

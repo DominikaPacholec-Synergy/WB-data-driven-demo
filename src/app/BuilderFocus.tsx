@@ -32,7 +32,7 @@ const SETTLE_MS = 250;
  *
  * Renders nothing; `useFitView` just has to be called inside `<Root>`.
  */
-export function BuilderFocus({ active }: { active: boolean }) {
+export const BuilderFocus = ({ active }: { active: boolean }) => {
   const fitView = useFitView();
   const latestFitView = useRef(fitView);
   latestFitView.current = fitView;
@@ -44,4 +44,4 @@ export function BuilderFocus({ active }: { active: boolean }) {
   }, [active]);
 
   return null;
-}
+};

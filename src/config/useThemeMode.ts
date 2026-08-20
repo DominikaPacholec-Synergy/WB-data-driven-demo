@@ -10,9 +10,9 @@ import { readMode, watchThemeMode } from './theme';
  * nothing to select. Wrapping it in `useSyncExternalStore` means the app bar's
  * switch and the Studio both follow our toggle and the SDK's own.
  */
-export function useThemeMode() {
+export const useThemeMode = () => {
   return useSyncExternalStore(
     (onChange) => watchThemeMode(() => onChange()),
     () => readMode(),
   );
-}
+};

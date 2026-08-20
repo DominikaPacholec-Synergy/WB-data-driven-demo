@@ -576,24 +576,35 @@
   align-items: flex-start;
 }
 
-/* ----------------------------------------------------- sdk decision branches */
-
 /*
  * Also not ours. The SDK's `DecisionBranches` control — `{ "type":
  * "DecisionBranches" }` in a palette's `ui.elements` — renders its Branch cards
  * and the dashed "Add branch" button as bare siblings inside a `<div>` that
  * carries no class and no `gap`. The only gap rule around it reaches that
- * wrapper, not its children, so the cards touch each other and the button sits
- * flush against the last one.
+ * wrapper, not its children, so the cards touch each other, the button sits
+ * flush against the last one, and the button — a `<button>`, so `width: auto`
+ * still shrinks to fit even though the SDK gives it `display: flex` — hugs the
+ * left edge of the panel.
  *
- * A margin on the card, not a `gap` on the wrapper: the wrapper is what we would
- * have to turn into a grid, and that would stretch the button too — it is an
- * intrinsic-width `<button>` today. Every card gets the margin because the
- * button always follows the last one, so one rule buys both gaps.
+ * The wrapper is what needs the style, not the button. Making it a flex column
+ * buys all three fixes from one rule: `gap` spaces the cards and the button,
+ * and the default `align-items: stretch` pulls the button out to the full panel
+ * width. Nothing here centres the label — the SDK's own base button class is
+ * already `justify-content: center`, so a stretched button centres its icon and
+ * text on its own.
+ *
+ * This is the SDK's own pattern, not an invention: `AiTools` mounts the SAME
+ * placeholder button inside a `_tools-container_` that is a flex column with a
+ * gap, and there the button is full width already. The branches wrapper is
+ * simply the one place the SDK forgot to style.
  *
  * Same caveat as the popup rule above: `_branch-card_` is an SDK internal, so an
- * SDK rename turns this into a silent no-op and the cards go back to touching.
+ * SDK rename turns this into a silent no-op — the cards go back to touching and
+ * the button shrinks back to its label. The child combinator is load-bearing:
+ * it keeps the rule on the one wrapper rather than every ancestor of a card.
  */
-.shell__properties [class*='_branch-card_'] {
-  margin-bottom: var(--app-gap-sm);
+.shell__properties div:has(> [class*='_branch-card_']) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-gap-sm);
 }

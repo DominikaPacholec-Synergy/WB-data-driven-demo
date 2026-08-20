@@ -34,20 +34,20 @@ const overrides: Record<'base' | ThemeMode, TokenMap> = { base: {}, light: {}, d
 
 let current: { theme: ThemeConfig; mode: ThemeMode } | null = null;
 
-export function readMode(): ThemeMode {
+export const readMode = (): ThemeMode => {
   return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
-}
+};
 
-function resolve(theme: ThemeConfig, mode: ThemeMode): TokenMap {
+const resolve = (theme: ThemeConfig, mode: ThemeMode): TokenMap => {
   return {
     ...theme.base,
     ...theme[mode],
     ...overrides.base,
     ...overrides[mode],
   };
-}
+};
 
-export function applyTheme(theme: ThemeConfig, mode: ThemeMode = readMode()): void {
+export const applyTheme = (theme: ThemeConfig, mode: ThemeMode = readMode()): void => {
   current = { theme, mode };
   const root = document.documentElement;
   const next = resolve(theme, mode);
@@ -63,7 +63,7 @@ export function applyTheme(theme: ThemeConfig, mode: ThemeMode = readMode()): vo
     root.style.setProperty(name, value);
     owned.add(name);
   }
-}
+};
 
 /**
  * Single-token live edit. Writes straight to the DOM and deliberately bypasses
@@ -71,54 +71,54 @@ export function applyTheme(theme: ThemeConfig, mode: ThemeMode = readMode()): vo
  * `nodeTypes` array identity on every slider frame, which overwrites its
  * module-level palette holder.
  */
-export function setTokenOverride(token: string, value: string, bucket: 'base' | 'mode'): void {
+export const setTokenOverride = (token: string, value: string, bucket: 'base' | 'mode'): void => {
   const target = bucket === 'base' ? overrides.base : overrides[readMode()];
   target[token] = value;
   document.documentElement.style.setProperty(token, value);
   owned.add(token);
-}
+};
 
-export function clearTokenOverride(token: string, bucket: 'base' | 'mode'): void {
+export const clearTokenOverride = (token: string, bucket: 'base' | 'mode'): void => {
   const target = bucket === 'base' ? overrides.base : overrides[readMode()];
   delete target[token];
   if (current) applyTheme(current.theme, current.mode);
-}
+};
 
-export function resetAllOverrides(): void {
+export const resetAllOverrides = (): void => {
   overrides.base = {};
   overrides.light = {};
   overrides.dark = {};
   if (current) applyTheme(current.theme, current.mode);
-}
+};
 
-export function hasOverrides(): boolean {
+export const hasOverrides = (): boolean => {
   return (
     Object.keys(overrides.base).length +
       Object.keys(overrides.light).length +
       Object.keys(overrides.dark).length >
     0
   );
-}
+};
 
 /** Reads the value actually in effect, so controls can show the live number. */
-export function readToken(token: string): string {
+export const readToken = (token: string): string => {
   const inline = document.documentElement.style.getPropertyValue(token);
   if (inline) return inline.trim();
   return getComputedStyle(document.documentElement).getPropertyValue(token).trim();
-}
+};
 
 /**
  * The exact `theme.json` fragment the user just produced with the sliders.
  * Closes the loop: what you dragged is a file a backend can serve.
  */
-export function exportThemePatch(): Pick<ThemeConfig, 'base' | 'light' | 'dark'> {
+export const exportThemePatch = (): Pick<ThemeConfig, 'base' | 'light' | 'dark'> => {
   const theme = current?.theme;
   return {
     base: { ...(theme?.base ?? {}), ...overrides.base },
     light: { ...(theme?.light ?? {}), ...overrides.light },
     dark: { ...(theme?.dark ?? {}), ...overrides.dark },
   };
-}
+};
 
 /**
  * Theme mode lives in a hand-rolled subscription Set inside the SDK, not in its
@@ -126,7 +126,7 @@ export function exportThemePatch(): Pick<ThemeConfig, 'base' | 'light' | 'dark'>
  * only reliable sync point; without it, toggling dark mode through the SDK's own
  * control would leave our mode-scoped tokens stale.
  */
-export function watchThemeMode(onChange: (mode: ThemeMode) => void): () => void {
+export const watchThemeMode = (onChange: (mode: ThemeMode) => void): () => void => {
   let last = readMode();
   const observer = new MutationObserver(() => {
     const mode = readMode();
@@ -137,7 +137,7 @@ export function watchThemeMode(onChange: (mode: ThemeMode) => void): () => void 
   });
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   return () => observer.disconnect();
-}
+};
 
 /**
  * Mirrors the SDK's own `setTheme` side effects.
@@ -146,11 +146,11 @@ export function watchThemeMode(onChange: (mode: ThemeMode) => void): () => void 
  * only writes `data-theme` in a useEffect INSIDE `<Root>` — before that runs,
  * `<html>` carries no attribute and all 174 semantic tokens are undefined.
  */
-export function setMode(mode: ThemeMode): void {
+export const setMode = (mode: ThemeMode): void => {
   try {
     localStorage.setItem(STORAGE_KEY, mode);
   } catch {
     /* ignore */
   }
   document.documentElement.dataset.theme = mode;
-}
+};

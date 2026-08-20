@@ -28,7 +28,7 @@ type Options = { customRenderer?: string; currency?: string };
 const optionsOf = (uischema: unknown): Options =>
   ((uischema as { options?: Options })?.options ?? {}) as Options;
 
-function CurrencyAmountControl({
+const CurrencyAmountControl = ({
   data,
   handleChange,
   path,
@@ -38,7 +38,7 @@ function CurrencyAmountControl({
   errors,
   schema,
   uischema,
-}: ControlProps) {
+}: ControlProps) => {
   const currency = optionsOf(uischema).currency ?? 'EUR';
 
   /*
@@ -107,7 +107,7 @@ function CurrencyAmountControl({
       {errors ? <p className="currency__error">{errors}</p> : null}
     </div>
   );
-}
+};
 
 /**
  * Rank 20 so it outranks the SDK's own controls for this one field. The tester
