@@ -1,0 +1,146 @@
+.dropdown {
+  position: relative;
+  display: grid;
+  width: 100%;
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 100px;
+  background-color: transparent;
+  color: var(--ax-public-select-button-color);
+  border: var(--ax-public-select-border-size) solid var(--ax-public-select-button-border-color);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background var(--app-transition),
+    border-color var(--app-transition);
+}
+
+.button--small {
+  gap: var(--ax-public-input-gap-small);
+  padding: var(--ax-public-input-padding-small);
+  border-radius: var(--ax-public-input-border-radius-small);
+}
+
+.button--medium {
+  gap: var(--ax-public-input-gap-medium);
+  padding: var(--ax-public-input-padding-medium);
+  border-radius: var(--ax-public-input-border-radius-medium);
+}
+
+.button--large {
+  gap: var(--ax-public-input-gap-large);
+  padding: var(--ax-public-input-padding-large);
+  border-radius: var(--ax-public-input-border-radius-large);
+}
+
+.button:hover:not(:disabled) {
+  background: var(--app-surface-hover);
+}
+
+.button[aria-expanded='true'],
+.button:focus-visible {
+  border-color: var(--ax-public-select-button-border-color-focus);
+  outline: none;
+}
+
+.button:disabled {
+  color: var(--ax-public-select-button-color-disabled);
+  cursor: auto;
+}
+
+.button svg {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  min-width: 1rem;
+}
+
+.value {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.value > span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.placeholder {
+  color: var(--app-text-faint);
+}
+
+.popup {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  max-height: 200px;
+  margin: 0.25rem 0 0;
+  padding: var(--ax-public-list-box-padding);
+  gap: var(--ax-public-list-box-gap);
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-radius: var(--ax-public-list-box-border-radius);
+  background: var(--ax-public-list-box-background-color);
+  box-shadow: var(--ax-public-list-box-box-shadow);
+  list-style: none;
+}
+
+.popup[hidden] {
+  display: none;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  width: max-content;
+  min-width: 100%;
+  border-radius: var(--ax-public-list-border-radius);
+  color: var(--ax-public-list-item-color);
+  cursor: pointer;
+}
+
+.popup--small .option {
+  gap: var(--ax-public-list-item-gap-small);
+  padding: var(--ax-public-list-item-padding-small);
+}
+
+.popup--medium .option {
+  gap: var(--ax-public-list-item-gap-medium);
+  padding: var(--ax-public-list-item-padding-medium);
+}
+
+.popup--large .option {
+  gap: var(--ax-public-list-item-gap-large);
+  padding: var(--ax-public-list-item-padding-large);
+}
+
+.option:hover,
+.option.is-active {
+  background-color: var(--ax-public-list-item-background-color);
+}
+
+.option[aria-selected='true'] {
+  background-color: var(--ax-public-list-item-background-color-selected);
+  color: var(--ax-public-list-item-color-selected);
+}
+
+.option svg {
+  flex-shrink: 0;
+}

@@ -1,0 +1,40 @@
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border: 1px solid var(--pill-stroke);
+  border-radius: var(--app-radius-chip);
+  background: var(--pill-bg);
+  color: var(--pill-txt);
+  font-size: 12px;
+  font-weight: 500;
+
+  --pill-bg: var(--tone-neutral-bg);
+  --pill-txt: var(--tone-neutral-txt);
+  --pill-stroke: var(--tone-neutral-stroke);
+}
+
+.status[data-tone='ok'] {
+  --pill-bg: var(--tone-ok-bg);
+  --pill-txt: var(--tone-ok-txt);
+  --pill-stroke: var(--tone-ok-stroke);
+}
+
+.status[data-tone='warn'] {
+  --pill-bg: var(--tone-warn-bg);
+  --pill-txt: var(--tone-warn-txt);
+  --pill-stroke: var(--tone-warn-stroke);
+}
+
+.status[data-tone='danger'] {
+  --pill-bg: var(--tone-danger-bg);
+  --pill-txt: var(--tone-danger-txt);
+  --pill-stroke: var(--tone-danger-stroke);
+}
+
+.status[data-tone='info'] {
+  --pill-bg: var(--tone-info-bg);
+  --pill-txt: var(--tone-info-txt);
+  --pill-stroke: var(--tone-info-stroke);
+}

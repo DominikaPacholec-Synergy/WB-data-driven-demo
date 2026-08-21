@@ -5,18 +5,13 @@ import type {
   WorkflowBuilderPlugin,
 } from '@workflowbuilder/sdk';
 
-import { nodeAnnotationsPlugin } from '../plugins/nodeAnnotations';
-import { currencyAmountRenderer } from '../renderers/currencyAmount';
-import { isoDateRenderer } from '../renderers/isoDate';
-import { switchFieldRenderer } from '../renderers/switchField';
+import { nodeAnnotationsPlugin } from '@/plugins/node-annotations/node-annotations';
+import { currencyAmountRenderer } from '@/renderers/currency-amount/currency-amount';
+import { isoDateRenderer } from '@/renderers/iso-date/iso-date';
+import { switchFieldRenderer } from '@/renderers/switch-field/switch-field';
 
 /**
  * Custom JsonForms renderers, registered once for the whole app.
- *
- * Two kinds live here. `currencyAmount` and `isoDate` are opt-in: which FIELD uses
- * one is decided in `palette.json` via `options.customRenderer`. `switchField` is
- * not — it matches the uischema type, so it replaces the SDK's control for every
- * boolean (caption beside the toggle rather than stacked above it, see the file).
  */
 export const CUSTOM_RENDERERS: JsonFormsRendererExtension[] = [
   currencyAmountRenderer,
@@ -35,15 +30,6 @@ export const JSON_FORM: WorkflowBuilderJsonFormConfig = { renderers: CUSTOM_REND
 
 export const PLUGINS: WorkflowBuilderPlugin[] = [nodeAnnotationsPlugin];
 
-/**
- * `props` rather than `localStorage`: the localStorage strategy writes to a
- * fixed `'workflowBuilderDiagram'` key that is NOT derived from the `name` prop,
- * so two profiles would overwrite each other's diagram.
- *
- * The SDK does not draw that distinction in its UI — it greets any non-empty
- * seed diagram with "Saved data has been restored", whatever the strategy. See
- * `./i18n` for the correction.
- */
 export const INTEGRATION: WorkflowBuilderIntegration = {
   strategy: 'props',
   onDataSave: async (data) => {

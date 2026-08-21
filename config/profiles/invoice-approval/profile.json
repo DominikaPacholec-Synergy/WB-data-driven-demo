@@ -20,7 +20,7 @@
       "ai.analyze.requiresApproval": true,
       "ai.analyze.reason": "Amount exceeds automatic approval limit."
     },
-    "facts": [
+    "summary": [
       { "label": "Customer", "key": "invoice.received.vendor" },
       {
         "label": "Amount",

@@ -1,0 +1,146 @@
+.boot {
+  display: grid;
+  place-content: center;
+  gap: var(--app-gap-sm);
+  height: 100%;
+  padding: var(--app-gap-lg);
+  color: var(--app-text-muted);
+  text-align: center;
+}
+
+.boot--error {
+  color: var(--app-text);
+}
+
+.boot-hint {
+  max-width: 46ch;
+  color: var(--app-text-faint);
+  font-size: 13px;
+}
+
+.boot code {
+  padding: 1px 5px;
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface-hover);
+  font-family: ui-monospace, monospace;
+  font-size: 0.92em;
+}
+
+/* SHELL */
+
+.app {
+  display: flex;
+  height: 100vh;
+}
+
+.shell {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* LAYER 0: CANVAS */
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.canvas > div {
+  width: 100%;
+  height: 100%;
+}
+
+.canvas.is-parked {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* LAYER 1: CHROME */
+
+.chrome {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  pointer-events: none;
+}
+
+.header {
+  container: appbar / inline-size;
+  padding: var(--app-gap) var(--app-gap) 0;
+  position: relative;
+  z-index: 1;
+}
+
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.panels {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: var(--app-gap);
+  overflow: hidden;
+}
+
+.palette,
+.properties {
+  display: flex;
+  height: 100%;
+}
+
+.properties {
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--app-gap);
+}
+
+.palette [draggable] > div > div {
+  min-width: 0;
+}
+
+.palette > [class*='_sidebar_'] > hr:last-of-type,
+.palette > [class*='_sidebar_'] > [class*='_footer_'] {
+  display: none;
+}
+
+.palette {
+  --wb-sidebar-expanded-width: calc(
+    var(--ax-public-node-width) + 2 * var(--wb-sidebar-horizontal-padding)
+  );
+}
+
+.properties div:has(> [class*='_branch-card_']) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-gap-sm);
+}
+
+.viewport-bounds {
+  flex: 1;
+  visibility: hidden;
+}
+
+.panels.is-parked {
+  visibility: hidden;
+}
+
+.view {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  background: var(--app-bg);
+  pointer-events: auto;
+}

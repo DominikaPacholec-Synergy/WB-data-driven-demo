@@ -1,13 +1,3 @@
-/**
- * Shell semantics, expressed purely in the SDK's own design-system tokens.
- *
- * The rule this file exists to enforce: no literal colour, radius or font-family
- * anywhere in `src/`. Everything downstream uses `--app-*`, which resolves to
- * `--ax-*` semantics, which resolve to `--ax-colors-*` primitives — so
- * overriding a handful of primitives re-skins the editor AND the whole shell
- * from one place. That is the article's claim, made grep-able.
- */
-
 :root {
   --app-bg: var(--ax-ui-bg-tertiary-default);
   --app-surface: var(--ax-ui-bg-primary-default);
@@ -48,19 +38,6 @@ html[data-theme='dark'] {
   --app-surface-hover: var(--ax-colors-gray-650);
 }
 
-/*
- * Run/status tones — one palette for every pill in the shell: the node badges
- * the interpreter writes, the status chips in Tasks and Executions, the step
- * list and the nav's task count.
- *
- * Light mode takes the SDK's chip tokens as they are. Dark mode does not: there
- * the chips resolve to the `-300` accent step — `#57f1b1` for "ok", `#fccdac`
- * for "warn" — and full-strength text and stroke of that step on a near-black
- * node reads as neon and outshouts the diagram it is annotating. Mixing the
- * accent toward the body text colour drops the chroma while keeping the hue, so
- * a brand override still flows all the way through, and the outline becomes a
- * fraction of the same colour rather than a hard line.
- */
 :root {
   --tone-neutral-bg: var(--ax-chips-neutral-bg);
   --tone-neutral-txt: var(--ax-chips-neutral-txt);
@@ -87,12 +64,24 @@ html[data-theme='dark'] {
   --tone-ok-txt: color-mix(in oklab, var(--ax-colors-acc3-400) 58%, var(--ax-txt-primary-default));
   --tone-ok-stroke: color-mix(in srgb, var(--ax-colors-acc3-400) 32%, transparent);
 
-  --tone-warn-txt: color-mix(in oklab, var(--ax-colors-acc5-400) 58%, var(--ax-txt-primary-default));
+  --tone-warn-txt: color-mix(
+    in oklab,
+    var(--ax-colors-acc5-400) 58%,
+    var(--ax-txt-primary-default)
+  );
   --tone-warn-stroke: color-mix(in srgb, var(--ax-colors-acc5-400) 32%, transparent);
 
-  --tone-danger-txt: color-mix(in oklab, var(--ax-colors-acc2-400) 58%, var(--ax-txt-primary-default));
+  --tone-danger-txt: color-mix(
+    in oklab,
+    var(--ax-colors-acc2-400) 58%,
+    var(--ax-txt-primary-default)
+  );
   --tone-danger-stroke: color-mix(in srgb, var(--ax-colors-acc2-400) 32%, transparent);
 
-  --tone-info-txt: color-mix(in oklab, var(--ax-colors-acc1-400) 58%, var(--ax-txt-primary-default));
+  --tone-info-txt: color-mix(
+    in oklab,
+    var(--ax-colors-acc1-400) 58%,
+    var(--ax-txt-primary-default)
+  );
   --tone-info-stroke: color-mix(in srgb, var(--ax-colors-acc1-400) 32%, transparent);
 }

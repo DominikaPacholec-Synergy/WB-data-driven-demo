@@ -1,0 +1,19 @@
+ls:
+  src:
+    .dir: kebab-case
+    .ts: kebab-case
+    .tsx: kebab-case
+    .css: kebab-case
+    .module.css: kebab-case
+    .md: kebab-case
+
+  vite-plugins:
+    .ts: kebab-case
+
+  config:
+    .dir: kebab-case
+    .json: kebab-case
+
+ignore:
+  - node_modules
+  - dist

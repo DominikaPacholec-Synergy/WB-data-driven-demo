@@ -1,0 +1,77 @@
+.tooltip {
+  position: relative;
+  display: inline-flex;
+}
+
+.pop {
+  position: absolute;
+  z-index: 100;
+  visibility: hidden;
+  opacity: 0;
+  transition:
+    opacity var(--app-transition),
+    visibility var(--app-transition);
+}
+
+.tooltip:hover .pop,
+.tooltip:has(:focus-visible) .pop {
+  visibility: visible;
+  opacity: 1;
+  transition-delay: 500ms;
+}
+
+.bubble {
+  top: calc(100% + 10px);
+  display: grid;
+  gap: var(--app-gap-xs);
+  box-sizing: border-box;
+  width: max-content;
+  max-width: 33vw;
+  padding: var(--ax-public-tooltip-padding);
+  border-radius: var(--ax-public-tooltip-radius-size);
+  background: var(--ax-public-tooltip-default-background);
+  color: var(--ax-public-tooltip-text-color);
+  text-align: left;
+}
+
+.arrow {
+  top: calc(100% + 6px);
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-right: 5px solid transparent;
+  border-bottom: 4px solid var(--ax-public-tooltip-default-background);
+  border-left: 5px solid transparent;
+  transform: translateX(-50%);
+}
+
+.tooltip--start .bubble {
+  left: 0;
+}
+
+.tooltip--center .bubble {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.tooltip--end .bubble {
+  right: 0;
+}
+
+.name {
+  font-weight: 600;
+}
+
+.detail {
+  color: color-mix(
+    in oklab,
+    var(--ax-public-tooltip-text-color) 78%,
+    var(--ax-public-tooltip-default-background)
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pop {
+    transition-duration: 0s;
+  }
+}

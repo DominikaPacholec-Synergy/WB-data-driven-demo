@@ -1,19 +1,5 @@
 import { create } from 'zustand';
 
-/**
- * Run state for the human-in-the-loop demo.
- *
- * Deliberately OUR store, not the SDK's. Run status must not be written into
- * `node.data.properties`: `setStoreNodes` re-validates every node against its
- * schema, so a run status would both pollute the document the integration saves
- * and risk tripping validation. Keeping it here, keyed by node id, means the
- * design-time document stays exactly what the config described.
- *
- * It is a module singleton so a run suspended on a human task survives
- * navigation between views — that is the whole point of "durable" execution,
- * even simulated.
- */
-
 export type NodeRunStatus = 'running' | 'done' | 'waiting' | 'rejected' | 'skipped';
 
 export type ExecutionStatus = 'running' | 'waiting' | 'completed' | 'rejected' | 'failed';
@@ -31,15 +17,6 @@ export type Step = { id: string; label: string };
 
 export type Execution = {
   id: string;
-  /**
-   * Runs belong to the profile that started them.
-   *
-   * Not cosmetic: the interpreter walks the diagram that is currently in the SDK
-   * store, so resuming a task created under another profile would advance it
-   * across a completely different graph. Scoping keeps each profile's inbox and
-   * run list its own — the two demos are separate applications that happen to
-   * share a shell.
-   */
   profileId: string;
   workflowName: string;
   status: ExecutionStatus;
@@ -90,7 +67,11 @@ type RunState = {
 };
 
 export const stamp = (): string => {
-  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  return new Date().toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
 };
 
 /** Immutable per-execution patch — zustand needs a fresh object to notify. */
@@ -148,7 +129,8 @@ export const useRunStore = create<RunState>((set) => ({
       patch(state, execId, (execution) => ({
         ...execution,
         status,
-        currentNodeId: status === 'running' || status === 'waiting' ? execution.currentNodeId : null,
+        currentNodeId:
+          status === 'running' || status === 'waiting' ? execution.currentNodeId : null,
       })),
     ),
 

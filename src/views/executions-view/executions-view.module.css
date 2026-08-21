@@ -1,0 +1,80 @@
+/*
+ * The run timeline: the step list the interpreter walked, beside the audit trail
+ * it wrote. The page frame, the master list and the card come from
+ * `src/styles/primitives.module.css`, which Tasks imports too.
+ */
+
+.timeline {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--app-gap-lg);
+  padding-top: var(--app-gap);
+  border-top: 1px solid var(--app-separator);
+}
+
+.timeline h3 {
+  margin: 0 0 var(--app-gap-sm);
+  color: var(--app-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.steps,
+.audit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-gap-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.steps li {
+  display: flex;
+  align-items: center;
+  gap: var(--app-gap-sm);
+  font-size: 13px;
+}
+
+.steps li[data-tone='pending'] {
+  color: var(--app-text-faint);
+}
+
+.steps li[data-tone='ok'] {
+  color: var(--tone-ok-txt);
+}
+
+.steps li[data-tone='warn'] {
+  color: var(--tone-warn-txt);
+  font-weight: 600;
+}
+
+.steps li[data-tone='info'] {
+  color: var(--tone-info-txt);
+}
+
+.steps li[data-tone='danger'] {
+  color: var(--tone-danger-txt);
+}
+
+.audit li {
+  display: flex;
+  gap: var(--app-gap-sm);
+  font-size: 13px;
+}
+
+.audit time {
+  flex: 0 0 auto;
+  color: var(--app-text-faint);
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+}
+
+.audit em {
+  display: block;
+  color: var(--app-text-faint);
+  font-size: 12px;
+  font-style: normal;
+}

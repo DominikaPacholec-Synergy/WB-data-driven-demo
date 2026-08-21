@@ -1,0 +1,71 @@
+/*
+ * The custom JsonForms controls
+ */
+
+.control {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface);
+}
+
+.field:focus-within {
+  border-color: var(--app-accent);
+}
+
+.field.is-invalid {
+  border-color: var(--tone-danger-stroke);
+}
+
+.field input {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 0;
+  background: none;
+  color: var(--app-text);
+  font-family: inherit;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.field input:focus {
+  outline: none;
+}
+
+.badge {
+  padding: 7px 9px;
+  border-right: 1px solid var(--app-border);
+  background: var(--app-bg);
+  color: var(--app-text-faint);
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+}
+
+.error {
+  margin: 0;
+  color: var(--tone-danger-txt);
+  font-size: 11px;
+}
+
+.field--date input {
+  color-scheme: light;
+  accent-color: var(--app-accent);
+}
+
+html[data-theme='dark'] .field--date input {
+  color-scheme: dark;
+}

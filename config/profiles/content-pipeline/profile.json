@@ -20,7 +20,7 @@
       "ai.draft.needsEditor": true,
       "ai.draft.reason": "Readability scored below the auto-publish threshold of 60."
     },
-    "facts": [
+    "summary": [
       { "label": "Topic", "key": "brief.received.topic" },
       { "label": "Readability", "key": "ai.draft.readability", "strong": true },
       { "label": "Words", "key": "ai.draft.words" },
