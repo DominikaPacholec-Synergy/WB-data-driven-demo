@@ -73,38 +73,40 @@ export const SchemaPanel = ({ profile, onApplyPalette }: Props) => {
 
   return (
     <div className={styles['panel']}>
-      <p className={styles['lede']}>
-        Straight from{' '}
-        <code>
-          GET /api/profiles/{profile.id}/{part}
-        </code>
-        . Editing the palette rewrites the node types and their property schemas at runtime.
-      </p>
+      <div className={styles['scroll']}>
+        <p className={styles['lede']}>
+          Straight from{' '}
+          <code>
+            GET /api/profiles/{profile.id}/{part}
+          </code>
+          . Editing the palette rewrites the node types and their property schemas at runtime.
+        </p>
 
-      <div className={styles['subtabs']}>
-        {PARTS.map((entry) => (
-          <button
-            key={entry}
-            type="button"
-            className={clsx({ [styles['is-active']]: part === entry })}
-            onClick={() => setPart(entry)}
-          >
-            {entry}.json
-          </button>
-        ))}
+        <div className={styles['subtabs']}>
+          {PARTS.map((entry) => (
+            <button
+              key={entry}
+              type="button"
+              className={clsx({ [styles['is-active']]: part === entry })}
+              onClick={() => setPart(entry)}
+            >
+              {entry}.json
+            </button>
+          ))}
+        </div>
+
+        <textarea
+          className={styles['editor']}
+          spellCheck={false}
+          value={text}
+          readOnly={part !== 'palette'}
+          onChange={(event) => setText(event.currentTarget.value)}
+        />
+
+        {status ? (
+          <p className={clsx(styles['status'], { [styles['is-error']]: failed })}>{status}</p>
+        ) : null}
       </div>
-
-      <textarea
-        className={styles['editor']}
-        spellCheck={false}
-        value={text}
-        readOnly={part !== 'palette'}
-        onChange={(event) => setText(event.currentTarget.value)}
-      />
-
-      {status ? (
-        <p className={clsx(styles['status'], { [styles['is-error']]: failed })}>{status}</p>
-      ) : null}
 
       <footer className={styles['footer']}>
         <button type="button" disabled={part !== 'palette'} onClick={apply}>

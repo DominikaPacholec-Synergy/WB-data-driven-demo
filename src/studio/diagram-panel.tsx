@@ -30,13 +30,15 @@ export const DiagramPanel = () => {
         </button>
       </footer>
 
-      <textarea
-        className={styles['editor']}
-        readOnly
-        spellCheck={false}
-        value={snapshot}
-        placeholder="Press “Capture diagram” to read the current nodes and edges out of the store."
-      />
+      <div className={styles['scroll']}>
+        <textarea
+          className={styles['editor']}
+          readOnly
+          spellCheck={false}
+          value={snapshot}
+          placeholder="Press “Capture diagram” to read the current nodes and edges out of the store."
+        />
+      </div>
     </div>
   );
 };

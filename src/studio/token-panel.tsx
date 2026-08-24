@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import { useRef, useState } from 'react';
 
 import { Dropdown } from '@/components/dropdown/dropdown';
@@ -114,36 +115,38 @@ export const TokenPanel = ({ theme }: Props) => {
 
   return (
     <div className={styles['panel']}>
-      <p className={styles['lede']}>
-        Every control below is one entry in <code>theme.json</code>. The names are the design
-        system's own custom properties — no aliases, no translation layer.
-      </p>
+      <div className={styles['scroll']}>
+        <p className={styles['lede']}>
+          Every control below is one entry in <code>theme.json</code>. The names are the design
+          system's own custom properties — no aliases, no translation layer.
+        </p>
 
-      <div className={styles['groups']} key={`${mode}:${generation}`}>
-        {theme.inspector.map((group) => (
-          <section className={styles['group']} key={group.label}>
-            <h3>{group.label}</h3>
-            {group.controls.map((control) => (
-              <label className={styles['control']} key={control.token}>
-                <span className={styles['label']}>
-                  {control.label}
-                  {control.bucket === 'mode' ? <em> · {mode}</em> : null}
-                </span>
-                <code className={styles['token']}>{control.token}</code>
-                {control.kind === 'color' ? (
-                  <ColorControl control={control} onEdit={onEdit} />
-                ) : control.kind === 'length' ? (
-                  <LengthControl control={control} onEdit={onEdit} />
-                ) : (
-                  <ChoiceControl control={control} onEdit={onEdit} />
-                )}
-              </label>
-            ))}
-          </section>
-        ))}
+        <div className={styles['groups']} key={`${mode}:${generation}`}>
+          {theme.inspector.map((group) => (
+            <section className={styles['group']} key={group.label}>
+              <h3>{group.label}</h3>
+              {group.controls.map((control) => (
+                <label className={styles['control']} key={control.token}>
+                  <span className={styles['label']}>
+                    {control.label}
+                    {control.bucket === 'mode' ? <em> · {mode}</em> : null}
+                  </span>
+                  <code className={styles['token']}>{control.token}</code>
+                  {control.kind === 'color' ? (
+                    <ColorControl control={control} onEdit={onEdit} />
+                  ) : control.kind === 'length' ? (
+                    <LengthControl control={control} onEdit={onEdit} />
+                  ) : (
+                    <ChoiceControl control={control} onEdit={onEdit} />
+                  )}
+                </label>
+              ))}
+            </section>
+          ))}
+        </div>
       </div>
 
-      <footer className={styles['footer']}>
+      <footer className={clsx(styles['footer'], styles['footer--divided'])}>
         <button type="button" onClick={() => void copy()}>
           {copied ? 'Copied' : 'Copy theme.json'}
         </button>

@@ -1,8 +1,11 @@
 import { Icon, type WBIcon } from '@workflowbuilder/sdk';
 import clsx from 'clsx';
 import { useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import styles from './dropdown.module.css';
+
+import { type Anchor, anchorTo } from './anchor-to';
 
 export type DropdownOption<T extends string = string> = {
   value: T;
@@ -31,9 +34,11 @@ export const Dropdown = <T extends string = string>({
 }: Props<T>) => {
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const popupRef = useRef<HTMLUListElement>(null);
   const listId = useId();
 
-  const [open, setOpen] = useState(false);
+  const [anchor, setAnchor] = useState<Anchor | null>(null);
+  const open = anchor !== null;
   const selectedIndex = options.findIndex((option) => option.value === value);
   /** Highlighted row while the list is open; -1 until something is chosen. */
   const [activeIndex, setActiveIndex] = useState(selectedIndex);
@@ -45,21 +50,34 @@ export const Dropdown = <T extends string = string>({
     if (!open) return;
 
     const onPointerDown = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (rootRef.current?.contains(target) || popupRef.current?.contains(target)) return;
+      setAnchor(null);
+    };
+
+    /** The popup is anchored in viewport coordinates, so it has to follow the trigger. */
+    const reanchor = () => {
+      if (buttonRef.current) setAnchor(anchorTo(buttonRef.current));
     };
 
     document.addEventListener('pointerdown', onPointerDown);
-    return () => document.removeEventListener('pointerdown', onPointerDown);
+    window.addEventListener('scroll', reanchor, true);
+    window.addEventListener('resize', reanchor);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('scroll', reanchor, true);
+      window.removeEventListener('resize', reanchor);
+    };
   }, [open]);
 
   const close = (refocus = true) => {
-    setOpen(false);
+    setAnchor(null);
     if (refocus) buttonRef.current?.focus();
   };
 
   const openAt = (index: number) => {
     setActiveIndex(index);
-    setOpen(true);
+    if (buttonRef.current) setAnchor(anchorTo(buttonRef.current));
   };
 
   const commit = (index: number) => {
@@ -138,32 +156,46 @@ export const Dropdown = <T extends string = string>({
         <Icon name="CaretDown" size="small" />
       </button>
 
-      <ul
-        className={clsx(styles['popup'], styles[`popup--${size}`])}
-        id={listId}
-        role="listbox"
-        hidden={!open}
-      >
-        {options.map((option, index) => (
-          <li
-            key={option.value}
-            id={optionId(index)}
-            role="option"
-            aria-selected={option.value === value}
-            className={clsx(styles['option'], {
-              [styles['is-active']]: index === activeIndex,
-            })}
-            onPointerDown={(event) => {
-              event.preventDefault();
-              commit(index);
-            }}
-            onMouseEnter={() => setActiveIndex(index)}
-          >
-            {option.icon ? <Icon name={option.icon} size="small" /> : null}
-            {option.label}
-          </li>
-        ))}
-      </ul>
+      {anchor
+        ? createPortal(
+            <ul
+              ref={popupRef}
+              className={clsx(styles['popup'], styles[`popup--${size}`], {
+                [styles['popup--above']]: anchor.bottom !== undefined,
+              })}
+              style={{
+                left: anchor.left,
+                top: anchor.top,
+                bottom: anchor.bottom,
+                width: anchor.width,
+                maxHeight: anchor.maxHeight,
+              }}
+              id={listId}
+              role="listbox"
+            >
+              {options.map((option, index) => (
+                <li
+                  key={option.value}
+                  id={optionId(index)}
+                  role="option"
+                  aria-selected={option.value === value}
+                  className={clsx(styles['option'], {
+                    [styles['is-active']]: index === activeIndex,
+                  })}
+                  onPointerDown={(event) => {
+                    event.preventDefault();
+                    commit(index);
+                  }}
+                  onMouseEnter={() => setActiveIndex(index)}
+                >
+                  {option.icon ? <Icon name={option.icon} size="small" /> : null}
+                  {option.label}
+                </li>
+              ))}
+            </ul>,
+            document.body,
+          )
+        : null}
     </div>
   );
 };
