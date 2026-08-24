@@ -1,0 +1,69 @@
+/* NODE BADGE */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 1px 7px;
+  border: 1px solid var(--pill-stroke);
+  border-radius: var(--app-radius-chip);
+  background: var(--pill-bg);
+  color: var(--pill-txt);
+  font-size: 10.5px;
+  font-weight: 600;
+
+  --pill-bg: var(--tone-neutral-bg);
+  --pill-txt: var(--tone-neutral-txt);
+  --pill-stroke: var(--tone-neutral-stroke);
+}
+
+.badge[data-tone='ok'] {
+  --pill-bg: var(--tone-ok-bg);
+  --pill-txt: var(--tone-ok-txt);
+  --pill-stroke: var(--tone-ok-stroke);
+}
+
+.badge[data-tone='warn'] {
+  --pill-bg: var(--tone-warn-bg);
+  --pill-txt: var(--tone-warn-txt);
+  --pill-stroke: var(--tone-warn-stroke);
+}
+
+.badge[data-tone='danger'] {
+  --pill-bg: var(--tone-danger-bg);
+  --pill-txt: var(--tone-danger-txt);
+  --pill-stroke: var(--tone-danger-stroke);
+}
+
+.badge[data-tone='info'] {
+  --pill-bg: var(--tone-info-bg);
+  --pill-txt: var(--tone-info-txt);
+  --pill-stroke: var(--tone-info-stroke);
+}
+
+/* PROVENANCE */
+
+.origin {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: 6px;
+  padding: 3px 7px;
+  border: 1px dashed var(--app-border);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-bg);
+}
+
+.origin code {
+  color: var(--app-accent);
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
+.origin span {
+  color: var(--app-text-faint);
+  font-family: ui-monospace, monospace;
+  font-size: 9.5px;
+}

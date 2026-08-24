@@ -12,17 +12,7 @@ import { type NodeRunStatus, useRunStore } from '@/run/store';
 import styles from './node-annotations.module.css';
 
 /**
- * Everything we add inside a node body, mounted on the SDK's
- * `OptionalNodeContent` slot: the run-status badge and the provenance label.
- *
- * ~60 generic lines and no forked node template, so the built-in `templateType`
- * looks stay intact.
- *
- * Caveat that shapes the config: the `ai-node` template does not render this
- * slot — its body is taken by the AI-tools control — so a node using that look
- * would show neither badge nor provenance. That is why the AI nodes in both
- * profiles omit `templateType` and take the plain `node` look; the icon and the
- * label carry "this step is AI" instead. One key in `palette.json`, no fork.
+ * Everything we add inside a node body
  */
 
 const TONE: Record<NodeRunStatus, { tone: string; icon: WBIcon; label: string }> = {
@@ -33,20 +23,9 @@ const TONE: Record<NodeRunStatus, { tone: string; icon: WBIcon; label: string }>
   skipped: { tone: 'muted', icon: 'Minus', label: 'Skipped' },
 };
 
-/**
- * A decorator's `content` does NOT receive the host component's props directly.
- * The SDK renders it as `content({ props })` — the host props arrive nested
- * under a single `props` key (verified in `dist/index-*.js`; the public type is
- * only `ElementType`, so nothing in the `.d.ts` tells you this). Destructuring
- * `nodeId` at the top level silently yields `undefined` and nothing shows.
- */
 type SlotProps = { props: { nodeId: string } };
 
 const NodeAnnotations = ({ props: { nodeId } }: SlotProps) => {
-  /*
-   * Both selectors MUST return scalars. Returning an object would mint a new
-   * identity on every store notification and loop the render.
-   */
   const status = useRunStore((state) => {
     const execId = state.order[0];
     return execId ? state.executions[execId]?.nodeStatus[nodeId] : undefined;
@@ -55,12 +34,6 @@ const NodeAnnotations = ({ props: { nodeId } }: SlotProps) => {
 
   const view = status ? TONE[status] : null;
 
-  /*
-   * Read the palette type from the store on demand. It is not reactive, but a
-   * node's type never changes after it is dropped, so there is nothing to
-   * subscribe to — and subscribing to the SDK store here would be a render loop
-   * waiting to happen.
-   */
   const paletteType = provenance
     ? String(
         (getStoreNodes().find((node) => node.id === nodeId)?.data as { type?: unknown })?.type ??
@@ -90,11 +63,6 @@ const NodeAnnotations = ({ props: { nodeId } }: SlotProps) => {
   );
 };
 
-/**
- * Module-level guard. `plugins` run on every `<Root>` mount and StrictMode
- * mounts twice, so without this the slot collects duplicates. The SDK also
- * dedupes by `name`, but we should not rely on two mechanisms for one rule.
- */
 let registered = false;
 
 export const nodeAnnotationsPlugin: WorkflowBuilderPlugin = () => {

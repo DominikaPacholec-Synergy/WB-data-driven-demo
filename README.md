@@ -1,158 +1,271 @@
-# WB — the editor is described by data
+# WB Data-Driven Demo
 
-A demo built as source material for an article about Workflow Builder.
+A React + TypeScript demo application built on the
+[Workflow Builder SDK](https://www.npmjs.com/package/@workflowbuilder/sdk), in which the
+editor itself is described by data. The node palette, the property panels, the seeded diagram
+and the whole visual theme come from JSON that the app fetches over HTTP at startup — none of
+it is hard-coded in React.
 
-**The claim:** the palette, the property panels, the seeded workflow and the whole
-look of the editor are *data*. The same code renders a different editor depending
-on the JSON a backend serves — design-system tokens for the look, JSON Schema +
-JSON Forms for the panels. No branch in the code per customer, no fork.
+The sample domain is a human-in-the-loop **Invoice Approval** workflow: an automated run
+pauses for a person to approve a payment, then continues. A second profile, **AI Content
+Pipeline**, runs the exact same code with different JSON — a different palette, different
+panels, a different diagram, a different brand and font.
 
-**The demo's content** is a human-in-the-loop *Invoice Approval* workflow: an
-automated run pauses for a person, then continues. So HITL is the subject matter;
-data-driven configuration is the argument.
+## Requirements
 
-Switch the **Profile** dropdown to see it: `Invoice Approval` (teal, Poppins,
-light, top-down) and `AI Content Pipeline` (magenta, IBM Plex Mono, dark,
-left-to-right) share every line of code.
+- **Node.js 18+** (the SDK declares `engines: { "node": ">=18" }`; Vite 5 expects 18 or 20+).
+  Developed on Node 20.
+- **npm** — the repository ships a `package-lock.json` (lockfile v3); there is no pnpm or yarn
+  lockfile.
+- Nothing else: no `.env` file, no backend, no auth. Everything runs locally.
 
-## Running
+## Getting started
 
 ```bash
 npm install
-npm run dev     # http://localhost:5173
-npm run build && npm run preview   # the mock config API works here too
+npm run dev        # http://localhost:5173
 ```
 
-## Where things live
+A production build works the same way:
 
-| Path | Role |
-|---|---|
-| `config/profiles/<id>/theme.json` | design tokens — keyed by the SDK's **real** custom-property names, split `base` / `light` / `dark`, plus `inspector` (which tokens get live controls) |
-| `config/profiles/<id>/palette.json` | node types **and** their property-panel schemas: JSON Schema `properties`, `required`, `allOf` conditional validation, JSON Forms `ui.elements` with `rule` show/hide |
-| `config/profiles/<id>/workflow.json` | the seeded diagram |
-| `config/profiles/<id>/profile.json` | chrome (document title, tagline, nav), status vocabulary, `taskFields`, `run` (mock context + task fact sheet) |
-| `vite-plugins/config-api.ts` | stands in for the config backend: `GET /api/profiles`, `/:id` (assembles the four files), `/:id/:part`. Visible in the Network tab — the config genuinely arrives over HTTP |
-| `src/config/` | the contract (`types.ts`), the loader, the compiler, the token engine |
-| `src/studio/` | Config Studio — edit the tokens and the schema at runtime |
-| `src/run/` | the run store and the interpreter that walks the diagram |
-| `src/views/` | Tasks (inbox) and Executions (timeline) |
-
-Nothing is `import`ed from `config/`; nothing lives in `public/`.
-
-## The five things worth recording
-
-1. **One token, everything repaints.** Config Studio → *Tokens* → drag Brand.
-   Buttons, node borders, node icons, the slider accent, the task inbox and the
-   timeline all move together, because the shell consumes the same `--ax-*`
-   tokens as the canvas. *Copy theme.json* hands back the file a backend would serve.
-2. **Swap the profile.** One dropdown changes the palette, the icons, the node
-   shapes, the seeded diagram, the panel fields, the nav labels, the tagline, the
-   font, the radii and the colour mode.
-3. **Tighten a schema at runtime.** Config Studio → *Schema* → on
-   `approval.human` set `thresholdAmount`'s `"minimum"` to `5000` (above the
-   `1000` the node already carries) → **Apply** → select Human Approval. A
-   validation badge appears on a node that was *already on the canvas*, and the
-   diagram is untouched. Edits are snapshotted across the remount, so the SDK
-   re-validates existing data against the new schema.
-4. **A conditional panel, with no React.** On Human Approval, change *Approval
-   mode*; `thresholdAmount`, `dueAfterHours` and the warning appear and disappear.
-   That is `rule` + `allOf` in JSON.
-5. **The human in the loop.** **Run** → nodes light up → `WAITING FOR HUMAN` →
-   *Tasks* → Approve → the run resumes to `COMPLETED`. Then prove the branch is
-   *configured*, not coded: raise the condition's threshold above the mocked
-   amount and the next run takes *Auto-approve* and never creates a task.
-
-Also: the **fingerprint** button labels every node with the config entry it was
-compiled from.
-
-## What is data and what is code
-
-Being straight about the boundary is the point of the demo.
-
-**Pure data, no code:** the palette and its groups; node icons (a `WBIcon`
-string); the built-in node looks via `templateType` (`start-node`,
-`decision-node` and the plain `node` are on the canvas); the whole properties panel
-(11 controls, 4 layouts, `rule` show/hide/enable/disable); conditional validation
-via `allOf`; the seeded diagram; layout direction; the nav, the
-tagline and the status vocabulary; the mocked run context and the task fact sheet.
-
-**Code, but the *choice* stays in data:** `src/renderers/currencyAmount.tsx` is a
-custom JSON Forms control. Which field uses it is one key in `palette.json`:
-
-```json
-{ "type": "Text", "scope": "#/properties/thresholdAmount",
-  "options": { "customRenderer": "CurrencyAmount", "currency": "EUR" } }
+```bash
+npm run build
+npm run preview
 ```
 
-**Code, unavoidably:** custom node/edge templates, plugins, `isValidConnection`,
-and anything beyond light/dark — `setTheme` accepts only `'dark' | 'light'`;
-everything else is CSS custom properties. *Removing* built-in UI is code too: the
-palette renders its footer unconditionally, so taking the **Templates** button out
-is a CSS rule in `src/styles/app.css`, not a config key. The data it consumed was
-data; the button was not.
+The mock config API is a Vite plugin registered on **both** `configureServer` and
+`configurePreviewServer` (`vite-plugins/config-api.ts`), so `preview` serves the profile JSON
+just like `dev` does.
 
-## Notes for whoever picks this up
+## Scripts
 
-- **Tokens must be inline styles on `<html>`.** The SDK's 174 semantic colour
-  tokens are declared on `html[data-theme=…]` — specificity (0,1,1) — so a plain
-  `:root {}` rule loses, and the blocks are unlayered so `@layer` cannot help.
-  Custom properties also resolve on the element that declares them, so
-  overriding a primitive on a wrapper `<div>` changes nothing above it. See the
-  long comment in `src/config/theme.ts`.
-- **Dark mode dims the status tones on purpose.** Every pill in the shell — node
-  run badges, the Tasks and Executions chips, the step list, the nav count — reads
-  one palette, `--tone-*` in `src/styles/tokens.css`. Light mode takes the SDK's
-  chip tokens verbatim; dark mode does not, because there they resolve to the
-  `-300` accent step and glow against a near-black node. The dark values mix the
-  same accent toward the body text colour, so the hue (and any brand override)
-  still comes from the design system while the chroma comes down. Change the mix
-  in one place, not in three stylesheets.
-- **The light/dark switch borrows the SDK's tokens, not its component.** The
-  icon switch from `WorkflowBuilder.TopBar` is not exported, and we replaced that
-  bar with our own header. `src/app/ThemeSwitch.tsx` re-creates it in markup and
-  styles it entirely from the `--ax-public-icon-switch-*` tokens the SDK declares
-  on `:root`, so it matches the official demo and repaints with the brand — the
-  thumb resolves to `--ax-colors-acc1-600`, which is teal in one profile and
-  magenta in the other.
-- **`nodeTypes` must be a stable reference.** An inline literal overwrites the
-  SDK's module-level palette holder on every parent render. `useProfileRuntime`
-  memoises on the profile *object* and logs every identity change in dev — one
-  line per profile swap is correct, a burst means something is rebuilding it.
-- **One `<Root>` per page.** Plugin, JSON Forms and i18n registries plus the
-  store facade are module singletons. That is why Tasks and Executions are views
-  inside the same shell, and why the builder is *parked* (`position: fixed;
-  opacity: 0`) rather than unmounted or `display: none` — xyflow would measure
-  zero and come back mis-laid-out.
-- **A node decorator's `content` receives `{ props }`.** The host component's
-  props arrive nested under one `props` key. The public type is only
-  `ElementType`, so nothing warns you; destructuring `nodeId` at the top level
-  silently yields `undefined`.
-- **`useFitView()` is not stable and not immediate.** It returns a new function
-  identity every render (so never make it an effect dependency) and does nothing
-  if called on the next animation frame — xyflow has not re-measured yet. See
-  `src/app/BuilderFocus.tsx`.
-- **The `ai-node` look and our badges are mutually exclusive.** That template
-  does not render the `OptionalNodeContent` slot — the AI-tools control takes the
-  body — so a node using it gets neither a run badge nor a provenance label. The
-  AI nodes therefore omit `templateType` and take the plain `node` look; their
-  icon and label carry "this step is AI". Reversing that trade is one key in
-  `palette.json`, which is itself worth demonstrating.
-- `jsonForm.translations` is wired through from `profile.translations`, but
-  neither profile ships translation content yet.
+| Script                    | What it does                                                  |
+| ------------------------- | ------------------------------------------------------------- |
+| `npm run dev`             | Vite dev server on port 5173                                  |
+| `npm run build`           | `tsc -b && vite build` — type-check, then bundle into `dist/` |
+| `npm run preview`         | Serve the production build locally                            |
+| `npm run typecheck`       | `tsc --noEmit`                                                |
+| `npm run typecheck:watch` | The same, in watch mode                                       |
+| `npm run lint`            | ESLint 9 (flat config)                                        |
+| `npm run lint:fix`        | ESLint with `--fix`                                           |
+| `npm run file-lint`       | ls-lint — enforces kebab-case file and folder names           |
+| `npm run format`          | Prettier over `css/ts/tsx/json/md`, with import sorting       |
+| `npm run check`           | `lint` + `typecheck` + `file-lint` in one go                  |
 
-## Deliberately out of scope
+There are **no tests and no CI** in this repository, and no pre-commit hooks —
+`npm run check` is the quality gate.
 
-Real Temporal, real AI, real payments, auth, a backend, persistence. The palette's
-**Templates** selector is gone: `workflow.json`'s seed already makes the point that
-the diagram is data, and the SDK's selector always offers an *Empty canvas* tile —
-one stray click from wiping the seeded run mid-demo. There is no
-`Save` button: with no backend behind it, `actions.save()` only logged the diagram
-JSON to the console, and Config Studio's *Diagram* tab already hands back the same
-payload — `getStoreDataForIntegration()`, with a Copy button. Run state is
-in-memory, so a reload clears it.
+## Tech stack
 
-Runs and tasks are **scoped to the profile that started them**: each profile has
-its own inbox and run list, and a suspended run survives switching away and back.
-That is not just tidiness — the interpreter walks whatever diagram the SDK store
-currently holds, so resuming another profile's task would step through unrelated
-nodes. `resolveTask` refuses to cross that line even if a view ever let it.
+- **UI** — React 18.3, TypeScript 5.5, Vite 5.4 (`@vitejs/plugin-react`), CSS Modules.
+- **Editor** — `@workflowbuilder/sdk` 2.2 (Apache-2.0, public npm registry) on top of
+  `@xyflow/react` 12.
+- **Forms** — `@jsonforms/core` and `@jsonforms/react` 3.8. The property panels are JSON
+  Schema plus a JSON Forms uischema, both supplied by the config.
+- **State** — `zustand` 5 (the run store and the provenance toggle) and `immer`.
+- **i18n** — `i18next`, `react-i18next`, `i18next-browser-languagedetector`.
+- **Utilities** — `clsx`.
+- **Tooling** — ESLint 9 flat config with `typescript-eslint`, `eslint-plugin-react` and
+  `eslint-plugin-react-hooks`; Prettier 3 with `@trivago/prettier-plugin-sort-imports`;
+  `@ls-lint/ls-lint`.
+
+Every runtime dependency except `clsx` is a **peer dependency of the SDK**, so the list is not
+prunable even though the app does not import all of them directly.
+
+## Project structure
+
+```text
+index.html                     # Vite entry; pre-paint script that reads the stored theme,
+                               # and the Google Fonts the SDK does not ship
+vite.config.ts                 # react plugin + the local configApi() plugin, alias @ -> ./src
+tsconfig.json                  # strict, bundler resolution, paths @/* -> src/*
+eslint.config.mjs              # ESLint 9 flat config
+.prettierrc.json               # single quotes, 100 cols, import-sort plugin
+.ls-lint.yml                   # kebab-case file and folder names
+
+config/                        # the config payload a backend would serve — pure JSON,
+  profiles/                    # never imported by src
+    index.json                 # the profile switcher menu: id, label, description, icon
+    invoice-approval/          # profile.json, theme.json, palette.json, workflow.json
+    content-pipeline/          # the same four files, a different domain
+
+vite-plugins/
+  config-api.ts                # mock config API middleware; runs in dev and in preview
+
+src/
+  main.tsx                     # entry: SDK stylesheet, global CSS, i18n, mounts <App/>
+
+  app/                         # the application shell around the SDK: one <Root>, the
+                               # header, hash routing, theme application
+    app.tsx                    # composes <WorkflowBuilder.Root>: canvas, palette,
+                               # properties panel, app bar, views, Config Studio
+    app.module.css             # shell layout and the SDK fixups our elements can scope
+    app-bar/                   # header: brand, nav, profile dropdown, theme switch, Run
+    builder-focus/             # calls useFitView() when the canvas becomes visible
+    theme-switch/              # the SDK's icon switch, rebuilt from its own tokens
+    use-hash-route.ts          # routing over window.location.hash; route ids come from config
+    use-profile-runtime.ts     # loads, compiles and swaps profiles; owns the <Root> key
+
+  config/                      # the JSON <-> React boundary: contract, loader, compiler and
+                               # token engine. Nothing here renders.
+    types/                     # the whole config contract, as TypeScript types: one file per
+                               # domain, no barrel — import the domain you need
+      profile.ts               # the profile index, a profile's meta, and EditorProfile
+      theme.ts                 # token maps, the two modes, the inspector's controls
+      palette.ts               # the compact authoring format for a node type
+      workflow.ts              # the seed diagram: nodes, edges, layout direction
+      compiled.ts              # what the compiler hands to <WorkflowBuilder.Root>
+    load-profile.ts            # fetch wrappers + runtime validation of the payload
+    compile-profile/           # config -> SDK palette items, xyflow nodes and edges
+      compile-profile.ts       # the entry point, and the only file imported from outside
+      build-palette-item.ts    # where the three builders below converge into a palette item
+      build-schema.ts          # splices the SDK's sharedProperties under the config's fields
+      build-ui-schema.ts       # splices in generalInformation and globalControls
+      build-defaults.ts        # the values a node opens with; the seed inherits them
+      with-resolved-captions.ts # carries label/placeholder from the property to the element
+      general-preset.ts        # what ui.preset "general" means, for schema and for defaults
+      compile-initial-diagram.ts # seed entries -> xyflow nodes and edges
+      profile-error.ts         # the one error a wrong config throws
+    theme.ts                   # the token engine: applies tokens, exports a theme patch
+    use-profile-theme.ts       # applies a profile's theme and re-applies on mode change
+    use-theme-mode.ts          # subscribes to the current light/dark mode
+
+  run/                         # the simulated durable-execution layer: an interpreter and a
+                               # store that outlive React
+    engine.ts                  # module-singleton interpreter that walks the live diagram
+    store.ts                   # zustand store: executions, node statuses, logs, tasks
+
+  plugins/                     # WB SDK plugins (component decorators)
+    node-annotations/          # run badges and provenance labels drawn onto nodes
+    provenance.ts              # the Fingerprint toggle and the node-type lookup
+
+  renderers/                   # custom JSON Forms controls
+    currency-amount/           # opt-in per field: options.customRenderer "CurrencyAmount"
+    iso-date/                  # opt-in "IsoDate" — a date input that satisfies format:"date"
+    switch-field/              # matches uischema type "Switch": every boolean field
+    renderers.module.css       # the field shell the three controls share
+
+  studio/                      # Config Studio — edits at runtime the config the editor was
+                               # built from
+    config-studio.tsx          # the dock and its three tabs
+    token-panel.tsx            # live token controls generated from theme.json's inspector
+    schema-panel.tsx           # fetch a raw config part, edit the JSON, Apply
+    diagram-panel.tsx          # a snapshot of the current diagram, with Copy
+    helpers/                   # colour normalisation and tolerant font-stack matching
+
+  views/                       # the two screens that are not the canvas
+    tasks-view/                # the human-task inbox and the configured summary
+    executions-view/           # the run list, step list and log timeline
+    status-pill/               # one tone-mapped status pill, shared by both views
+
+  components/                  # three primitives the SDK does not export
+    dropdown/                  # dropdown.tsx + dropdown.module.css
+    switch/                    # switch.tsx + switch.module.css
+    tooltip/                   # tooltip.tsx + tooltip.module.css
+
+  helpers/
+    format-money.ts            # Intl currency formatting
+
+  wb/                          # module singletons the SDK needs to be reference-stable
+    runtime.ts                 # CUSTOM_RENDERERS, JSON_FORM, PLUGINS, INTEGRATION
+    i18n.ts                    # overrides one SDK string in en and pl
+
+  styles/                      # the CSS that deliberately stays global
+    tokens.css                 # the --app-* alias layer and the --tone-* status palette
+    base.css                   # html / body / #root element rules
+    sdk-overrides.css          # the rules that select SDK DOM we cannot scope by our own
+    primitives.module.css      # classes shared by Tasks and Executions
+    css-modules.decision-log.md  # what is global and what is a CSS module, and why
+```
+
+Two invariants worth knowing: nothing is `import`ed from `config/`, and there is no `public/`
+directory. The JSON genuinely arrives over HTTP and is visible in the Network tab.
+
+## Configuration profiles
+
+A **profile** is one complete editor definition. Each lives in its own directory and is made
+of four files:
+
+```text
+config/profiles/index.json
+config/profiles/<id>/profile.json
+config/profiles/<id>/theme.json
+config/profiles/<id>/palette.json
+config/profiles/<id>/workflow.json
+```
+
+| File            | Contents                                                                                                                                             |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `profile.json`  | app chrome (document title, tagline, nav), the status vocabulary, `taskFields`, and `run` — the mocked run context plus the task summary          |
+| `theme.json`    | design tokens keyed by the SDK's real custom-property names, split into `base` / `light` / `dark`, plus `inspector` — which tokens get live controls |
+| `palette.json`  | node types **and** their property panels: JSON Schema `properties`, `required` and `allOf`, and the JSON Forms `ui.elements` with `rule` show/hide   |
+| `workflow.json` | the seeded diagram: `layoutDirection`, `seed.nodes` and `seed.edges`                                                                                 |
+
+Two profiles ship: `invoice-approval` and `content-pipeline`. Switch between them with the
+**Profile** dropdown in the app bar.
+
+`vite-plugins/config-api.ts` stands in for the config backend and exposes three GET routes:
+
+| Route                     | Response                                                   |
+| ------------------------- | ---------------------------------------------------------- |
+| `/api/profiles`           | the profile index                                          |
+| `/api/profiles/:id`       | the four files assembled into one document                 |
+| `/api/profiles/:id/:part` | one raw file (`profile`, `theme`, `palette` or `workflow`) |
+
+Files are read from disk on every request and served with `Cache-Control: no-store` — edit a
+JSON file, reload the page, and the editor changes.
+
+## How it works
+
+**Load, compile, render.** `src/config/load-profile.ts` fetches the profile and validates the
+shape of the payload. `src/config/compile-profile/` turns the authoring format into what the
+SDK accepts: palette items with their schema and uischema, and xyflow nodes and edges compiled
+from the seed. `src/app/use-profile-runtime.ts` orchestrates that and derives a `rootKey`;
+`src/app/app.tsx` renders a single `<WorkflowBuilder.Root>` keyed by it. A schema edit bumps
+the key, so `<Root>` remounts with the live diagram snapshotted and re-validated against the
+new schema.
+
+**Theming.** `src/config/theme.ts` writes the profile's tokens as inline style on `<html>` and
+tracks which properties it owns, so overrides can be layered and cleared per mode. It has to
+be `<html>`: the SDK declares its own semantic tokens on `html[data-theme=…]`, and custom
+properties resolve on the element that declares them — the long comment in that file explains
+the specificity trap in full. `src/styles/tokens.css` adds the `--app-*` alias layer and the
+`--tone-*` status palette on top.
+
+**The run engine.** `src/run/engine.ts` is a module-level singleton, not a hook, so a run
+survives navigation between views. It walks the diagram currently held in the SDK store — not
+the config — which means retuning a condition in the properties panel changes the next run.
+Node roles are recognised by shape rather than by name (`/\.human$/`, the presence of
+`decisionBranches`), and `{{nodes.<id>.<output>}}` operands resolve through the palette type
+into `profile.run.context`. A human node suspends the run and creates a task; the Tasks view
+resumes it. `src/run/store.ts` keeps executions, node statuses, logs and tasks in a separate
+zustand store, so run state never lands in the diagram's saved data. Runs are scoped to the
+profile that started them, and everything is in memory.
+
+**Extension points.** `src/plugins/node-annotations` is the one SDK plugin: it decorates the
+`OptionalNodeContent` slot with run badges and provenance labels. `src/renderers/*` are JSON
+Forms controls — two are opted into per field from `palette.json` via
+`options.customRenderer`, and one matches every boolean. Both sets are registered once, as
+stable module-level references, in `src/wb/runtime.ts`.
+
+**Config Studio.** A dock with three tabs. _Tokens_ generates live controls from
+`theme.json`'s `inspector` section and can copy back a complete `theme.json`. _Schema_
+refetches a raw config part, lets you edit the JSON and recompiles the palette on **Apply**.
+_Diagram_ captures `getStoreDataForIntegration()` with a Copy button.
+
+## Conventions
+
+- kebab-case files and folders, enforced by `.ls-lint.yml`
+- a folder per component, with its `<name>.module.css` beside it
+- named exports, and arrow-function components (enforced by
+  `react/function-component-definition`)
+- `@/` for any import outside the current folder
+- import order enforced by Prettier's sort-imports plugin
+- what stays global CSS and what becomes a module is recorded in
+  [`src/styles/css-modules.decision-log.md`](src/styles/css-modules.decision-log.md)
+
+## Limitations
+
+- No backend, no auth, no persistence — run state is in memory, and a reload clears it.
+- No real workflow engine, AI or payment provider; the run is simulated.
+- No tests and no CI.

@@ -1,11 +1,12 @@
 import {
-  getStoreEdges,
-  getStoreNodes,
   type WorkflowBuilderEdge,
   type WorkflowBuilderNode,
+  getStoreEdges,
+  getStoreNodes,
 } from '@workflowbuilder/sdk';
 
-import type { TaskFieldMap } from '../config/types';
+import type { TaskFieldMap } from '@/config/types/profile';
+
 import { useRunStore } from './store';
 
 /**
@@ -43,7 +44,6 @@ let taskFields: TaskFieldMap = {};
  */
 let runContext: Record<string, unknown> = {};
 
-/** Which profile's diagram is currently loaded. Stamped onto every run. */
 let activeProfileId = '';
 
 export const configureRun = (
@@ -67,13 +67,6 @@ const paletteTypeOf = (node: WorkflowBuilderNode): string =>
 const labelOf = (node: WorkflowBuilderNode): string =>
   String(propertiesOf(node).label ?? paletteTypeOf(node) ?? node.id);
 
-/*
- * Node roles are recognised from SHAPE, not from a hard-coded list of type
- * names. `approval.human` in the invoice profile and `review.human` in the
- * content profile both pause a run; a node carrying `decisionBranches` both
- * branches. Matching on the data keeps the engine profile-agnostic — hard-coding
- * `'approval.human'` would quietly break the second profile.
- */
 const isHumanNode = (node: WorkflowBuilderNode) => /\.human$/.test(paletteTypeOf(node));
 
 const branchesOf = (node: WorkflowBuilderNode): DecisionBranch[] => {
@@ -126,7 +119,9 @@ const resolveOperand = (raw: string, context: Record<string, unknown>): unknown 
   const whole = /^\s*\{\{\s*([^}]+?)\s*\}\}\s*$/.exec(raw);
   if (whole) return lookup(whole[1], context);
   // Mixed text: interpolate, then let coercion decide if it is a number.
-  return raw.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (_, key: string) => String(lookup(key, context) ?? ''));
+  return raw.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (_, key: string) =>
+    String(lookup(key, context) ?? ''),
+  );
 };
 
 const coerce = (value: unknown): number | string | boolean => {
@@ -217,7 +212,6 @@ const outgoing = (
   });
 };
 
-/** The start node: `templateType === 'start-node'`, else whatever has no input. */
 const findStart = (
   nodes: WorkflowBuilderNode[],
   edges: WorkflowBuilderEdge[],
