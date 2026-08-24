@@ -148,7 +148,7 @@ export const Dropdown = <T extends string = string>({
         onKeyDown={onKeyDown}
       >
         <span className={styles['value']}>
-          {selected?.icon ? <Icon name={selected.icon} size="small" /> : null}
+          {selected?.icon ? <Icon name={selected.icon} size="medium" /> : null}
           <span className={selected ? undefined : styles['placeholder']}>
             {selected?.label ?? placeholder}
           </span>
@@ -188,7 +188,7 @@ export const Dropdown = <T extends string = string>({
                   }}
                   onMouseEnter={() => setActiveIndex(index)}
                 >
-                  {option.icon ? <Icon name={option.icon} size="small" /> : null}
+                  {option.icon ? <Icon name={option.icon} size="medium" /> : null}
                   {option.label}
                 </li>
               ))}

@@ -78,3 +78,43 @@
   font-size: 12px;
   font-style: normal;
 }
+
+.head-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--app-gap-sm);
+}
+
+.track {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-surface);
+  color: var(--app-text);
+  font-family: inherit;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--app-transition);
+}
+
+.track:hover {
+  background: var(--app-surface-hover);
+}
+
+.on-canvas {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border: 1px solid var(--app-accent);
+  border-radius: var(--app-radius-chip);
+  color: var(--app-accent);
+  font-size: 12px;
+  white-space: nowrap;
+}

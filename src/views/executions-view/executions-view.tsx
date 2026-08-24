@@ -2,6 +2,7 @@ import { Icon, type WBIcon } from '@workflowbuilder/sdk';
 import clsx from 'clsx';
 import { useState } from 'react';
 
+import { navigate } from '@/app/use-hash-route';
 import { type Execution, useRunStore } from '@/run/store';
 import primitives from '@/styles/primitives.module.css';
 
@@ -18,6 +19,8 @@ const STEP_ICON: Record<string, { icon: WBIcon; tone: string }> = {
 };
 
 const ExecutionDetail = ({ execution }: { execution: Execution }) => {
+  const trackExecution = useRunStore((state) => state.trackExecution);
+
   return (
     <section className={primitives['card']}>
       <header className={primitives['card-head']}>
@@ -27,7 +30,20 @@ const ExecutionDetail = ({ execution }: { execution: Execution }) => {
           </h2>
           <p className={primitives['card-sub']}>Started {execution.startedAt}</p>
         </div>
-        <StatusPill value={execution.status} />
+        <div className={styles['head-actions']}>
+          <StatusPill value={execution.status} />
+          <button
+            type="button"
+            className={styles['track']}
+            onClick={() => {
+              trackExecution(execution.id);
+              navigate('builder');
+            }}
+          >
+            <Icon name="Crosshair" size="medium" />
+            Track on canvas
+          </button>
+        </div>
       </header>
 
       <div className={styles['timeline']}>
@@ -69,6 +85,7 @@ const ExecutionDetail = ({ execution }: { execution: Execution }) => {
 export const ExecutionsView = ({ profileId }: { profileId: string }) => {
   const allIds = useRunStore((state) => state.order);
   const executions = useRunStore((state) => state.executions);
+  const trackedExecId = useRunStore((state) => state.trackedExecId);
   const [openId, setOpenId] = useState<string | null>(null);
 
   /* Runs belong to the profile that started them — see the store's comment. */
@@ -115,6 +132,12 @@ export const ExecutionsView = ({ profileId }: { profileId: string }) => {
                             }`
                           : `started ${execution.startedAt}`}
                       </span>
+                      {trackedExecId === id ? (
+                        <span className={styles['on-canvas']}>
+                          <Icon name="Crosshair" size="medium" />
+                          on canvas
+                        </span>
+                      ) : null}
                     </span>
                     <StatusPill value={execution.status} />
                   </button>

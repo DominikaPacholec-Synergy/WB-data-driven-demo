@@ -26,10 +26,9 @@ const TONE: Record<NodeRunStatus, { tone: string; icon: WBIcon; label: string }>
 type SlotProps = { props: { nodeId: string } };
 
 const NodeAnnotations = ({ props: { nodeId } }: SlotProps) => {
-  const status = useRunStore((state) => {
-    const execId = state.order[0];
-    return execId ? state.executions[execId]?.nodeStatus[nodeId] : undefined;
-  });
+  const status = useRunStore((state) =>
+    state.trackedExecId ? state.executions[state.trackedExecId]?.nodeStatus[nodeId] : undefined,
+  );
   const provenance = useProvenanceStore((state) => state.enabled);
 
   const view = status ? TONE[status] : null;

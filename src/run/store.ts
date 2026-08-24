@@ -50,6 +50,7 @@ type RunState = {
   order: string[];
   tasks: Record<string, Task>;
   taskOrder: string[];
+  trackedExecId: string | null;
 
   createExecution: (
     execId: string,
@@ -63,6 +64,8 @@ type RunState = {
   setStatus: (execId: string, status: ExecutionStatus) => void;
   createTask: (task: Omit<Task, 'status' | 'createdAt'>) => void;
   closeTask: (taskId: string, status: TaskStatus, comment?: string) => void;
+  trackExecution: (execId: string | null) => void;
+  trackNewestFor: (profileId: string) => void;
   clear: () => void;
 };
 
@@ -86,6 +89,7 @@ export const useRunStore = create<RunState>((set) => ({
   order: [],
   tasks: {},
   taskOrder: [],
+  trackedExecId: null,
 
   createExecution: (execId, profileId, workflowName, steps, context) =>
     set((state) => ({
@@ -105,6 +109,7 @@ export const useRunStore = create<RunState>((set) => ({
         },
       },
       order: [execId, ...state.order],
+      trackedExecId: execId,
     })),
 
   setNodeStatus: (execId, nodeId, status) =>
@@ -147,5 +152,13 @@ export const useRunStore = create<RunState>((set) => ({
       return { tasks: { ...state.tasks, [taskId]: { ...task, status, comment } } };
     }),
 
-  clear: () => set({ executions: {}, order: [], tasks: {}, taskOrder: [] }),
+  trackExecution: (execId) => set({ trackedExecId: execId }),
+
+  trackNewestFor: (profileId) =>
+    set((state) => ({
+      trackedExecId:
+        state.order.find((id) => state.executions[id]?.profileId === profileId) ?? null,
+    })),
+
+  clear: () => set({ executions: {}, order: [], tasks: {}, taskOrder: [], trackedExecId: null }),
 }));

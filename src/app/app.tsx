@@ -15,6 +15,7 @@ import styles from './app.module.css';
 
 import { AppBar } from './app-bar/app-bar';
 import { BuilderFocus } from './builder-focus/builder-focus';
+import { RunTracker } from './run-tracker/run-tracker';
 import { navigate, useHashRoute } from './use-hash-route';
 import { useProfileRuntime } from './use-profile-runtime';
 
@@ -46,6 +47,10 @@ export const App = () => {
   useEffect(() => {
     configureRun(profileId ?? '', profile?.taskFields, profile?.run?.context);
   }, [profileId, profile?.taskFields, profile?.run?.context]);
+
+  useEffect(() => {
+    useRunStore.getState().trackNewestFor(profileId ?? '');
+  }, [profileId]);
 
   // The engine owns timers outside React; make sure a teardown clears them.
   useEffect(() => disposeEngine, []);
@@ -121,7 +126,11 @@ export const App = () => {
                   <WorkflowBuilder.Palette />
                 </aside>
 
-                <div id="viewport-bounds" className={styles['viewport-bounds']} />
+                <div className={styles['middle']}>
+                  <RunTracker profileId={profile.id} />
+                  <div id="viewport-bounds" className={styles['viewport-bounds']} />
+                </div>
+
                 <aside className={styles['properties']}>
                   <WorkflowBuilder.PropertiesPanel />
                 </aside>

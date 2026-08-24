@@ -379,6 +379,7 @@ export const resolveTask = (taskId: string, decision: 'approve' | 'reject', comm
   }
 
   store.setStatus(execId, 'running');
+  store.trackExecution(execId);
   store.log(execId, 'Workflow resumed');
 
   const next = outgoing(getStoreEdges(), nodeId)[0];
