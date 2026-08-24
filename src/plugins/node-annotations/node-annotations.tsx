@@ -56,7 +56,11 @@ const NodeAnnotations = ({ props: { nodeId } }: SlotProps) => {
       {provenance && paletteType ? (
         <div className={styles['origin']}>
           <code>palette.json › {paletteType}</code>
-          {config ? <span>icon: {config.icon}</span> : <span>not in this palette</span>}
+          {config ? (
+            <span>template: {config.templateType ?? 'node'}</span>
+          ) : (
+            <span>not in this palette</span>
+          )}
         </div>
       ) : null}
     </>
