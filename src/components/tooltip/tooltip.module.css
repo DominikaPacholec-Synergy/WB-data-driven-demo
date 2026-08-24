@@ -36,26 +36,33 @@
 
 .arrow {
   top: calc(100% + 6px);
-  left: 50%;
   width: 0;
   height: 0;
   border-right: 5px solid transparent;
   border-bottom: 4px solid var(--ax-public-tooltip-default-background);
   border-left: 5px solid transparent;
-  transform: translateX(-50%);
 }
 
 .tooltip--start .bubble {
   left: 0;
 }
 
-.tooltip--center .bubble {
+.tooltip--start .arrow {
+  left: 10px;
+}
+
+.tooltip--center .bubble,
+.tooltip--center .arrow {
   left: 50%;
   transform: translateX(-50%);
 }
 
 .tooltip--end .bubble {
   right: 0;
+}
+
+.tooltip--end .arrow {
+  right: 10px;
 }
 
 .name {
