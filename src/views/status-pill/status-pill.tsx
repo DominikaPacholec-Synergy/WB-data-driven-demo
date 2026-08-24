@@ -7,6 +7,7 @@ const TONES: Record<string, { tone: string; label: string }> = {
   completed: { tone: 'ok', label: 'Completed' },
   rejected: { tone: 'danger', label: 'Rejected' },
   failed: { tone: 'danger', label: 'Failed' },
+  cancelled: { tone: 'neutral', label: 'Abandoned' },
   pending: { tone: 'warn', label: 'Pending' },
 };
 

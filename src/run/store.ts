@@ -2,7 +2,8 @@ import { create } from 'zustand';
 
 export type NodeRunStatus = 'running' | 'done' | 'waiting' | 'rejected' | 'skipped';
 
-export type ExecutionStatus = 'running' | 'waiting' | 'completed' | 'rejected' | 'failed';
+export type ExecutionStatus =
+  'running' | 'waiting' | 'completed' | 'rejected' | 'failed' | 'cancelled';
 
 export type TaskStatus = 'pending' | 'completed' | 'rejected';
 

@@ -23,7 +23,13 @@ import { useRunStore } from './store';
 
 const STEP_DELAY_MS = 900;
 
-const timers = new Set<ReturnType<typeof setTimeout>>();
+/**
+ * Pending step timers, keyed by execution.
+ *
+ * A flat Set could only ever be cleared wholesale, and several runs are routinely
+ * in flight at once — so cancelling one meant cancelling all of them.
+ */
+const timers = new Map<string, Set<ReturnType<typeof setTimeout>>>();
 
 /** Matches the spec's "#1842". Bumped per run so ids read like real ones. */
 let nextExecutionNumber = 1842;
@@ -51,6 +57,20 @@ export const configureRun = (
   map: TaskFieldMap | undefined,
   context: Record<string, unknown> | undefined,
 ): void => {
+  /*
+   * A different profile means a different diagram in the store. Runs parked on a
+   * human task are safe to leave alone: they hold no timer, and `resolveTask`
+   * refuses to resume one under the wrong profile, so switching away and back
+   * again finds them exactly where they were. Runs with a step in flight are not
+   * safe — their next tick would land on the new graph.
+   */
+  if (profileId !== activeProfileId) {
+    const { executions } = useRunStore.getState();
+    for (const execId of [...timers.keys()]) {
+      if (executions[execId]?.profileId !== profileId) abandon(execId);
+    }
+  }
+
   activeProfileId = profileId;
   taskFields = map ?? {};
   runContext = context ?? {};
@@ -224,12 +244,32 @@ const findStart = (
 
 /* ----------------------------------------------------------------- engine */
 
-const later = (run: () => void) => {
+const later = (execId: string, run: () => void) => {
+  const pending = timers.get(execId) ?? new Set<ReturnType<typeof setTimeout>>();
+  timers.set(execId, pending);
+
   const timer = setTimeout(() => {
-    timers.delete(timer);
+    pending.delete(timer);
+    if (!pending.size) timers.delete(execId);
     run();
   }, STEP_DELAY_MS);
-  timers.add(timer);
+  pending.add(timer);
+};
+
+/** Drops one run's pending steps. The run itself is left to the caller to label. */
+const cancelSteps = (execId: string) => {
+  const pending = timers.get(execId);
+  if (!pending) return;
+  for (const timer of pending) clearTimeout(timer);
+  timers.delete(execId);
+};
+
+/** Ends a run whose diagram is no longer loaded. */
+const abandon = (execId: string) => {
+  const store = useRunStore.getState();
+  cancelSteps(execId);
+  store.setStatus(execId, 'cancelled');
+  store.log(execId, 'Workflow abandoned');
 };
 
 /** Reads a task field through the profile's name mapping. */
@@ -287,9 +327,14 @@ const advance = (execId: string, nodeId: string) => {
   store.setNodeStatus(execId, nodeId, 'running');
   store.log(execId, `${labelOf(node)} started`);
 
-  later(() => {
+  later(execId, () => {
     const live = useRunStore.getState();
     if (!live.executions[execId]) return;
+
+    if (live.executions[execId].profileId !== activeProfileId) {
+      abandon(execId);
+      return;
+    }
     live.setNodeStatus(execId, nodeId, 'done');
 
     const context = live.executions[execId].context;
@@ -389,10 +434,4 @@ export const resolveTask = (taskId: string, decision: 'approve' | 'reject', comm
     store.setStatus(execId, 'completed');
     store.log(execId, 'Workflow completed');
   }
-};
-
-/** Clears pending timers. Called when the builder unmounts or a profile swaps. */
-export const disposeEngine = () => {
-  for (const timer of timers) clearTimeout(timer);
-  timers.clear();
 };

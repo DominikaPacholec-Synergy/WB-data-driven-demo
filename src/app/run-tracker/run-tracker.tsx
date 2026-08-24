@@ -14,6 +14,7 @@ const OPTION_ICON: Record<string, WBIcon> = {
   completed: 'CheckCircle',
   rejected: 'XCircle',
   failed: 'Warning',
+  cancelled: 'Prohibit',
 };
 
 /** Open == still going somewhere: it can still change the badges you see. */

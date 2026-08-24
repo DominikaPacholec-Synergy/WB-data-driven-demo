@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { useProfileTheme } from '@/config/use-profile-theme';
 import { setNodeIndex } from '@/plugins/provenance';
-import { configureRun, disposeEngine, startRun } from '@/run/engine';
+import { configureRun, startRun } from '@/run/engine';
 import { useRunStore } from '@/run/store';
 import { ConfigStudio } from '@/studio/config-studio';
 import { ExecutionsView } from '@/views/executions-view/executions-view';
@@ -51,9 +51,6 @@ export const App = () => {
   useEffect(() => {
     useRunStore.getState().trackNewestFor(profileId ?? '');
   }, [profileId]);
-
-  // The engine owns timers outside React; make sure a teardown clears them.
-  useEffect(() => disposeEngine, []);
 
   if (error) {
     return (
