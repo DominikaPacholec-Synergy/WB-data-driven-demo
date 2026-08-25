@@ -93,13 +93,6 @@
               "label": "Prompt",
               "placeholder": "Analyze the invoice and decide whether it needs manual approval."
             },
-            "temperature": {
-              "type": "number",
-              "label": "Temperature",
-              "minimum": 0,
-              "maximum": 1,
-              "multipleOf": 0.1
-            },
             "timeoutSeconds": {
               "type": "number",
               "label": "Timeout (s)",
@@ -123,14 +116,7 @@
                 "type": "Accordion",
                 "label": "Execution",
                 "elements": [
-                  {
-                    "type": "HorizontalLayout",
-                    "layoutColumns": "1fr 1fr",
-                    "elements": [
-                      { "type": "Text", "scope": "#/properties/temperature", "inputType": "number" },
-                      { "type": "Text", "scope": "#/properties/timeoutSeconds", "inputType": "number" }
-                    ]
-                  }
+                  { "type": "Text", "scope": "#/properties/timeoutSeconds", "inputType": "number" }
                 ]
               }
             ]
@@ -138,7 +124,6 @@
           "defaults": {
             "model": "claude-sonnet-5",
             "prompt": "Analyze the invoice and determine whether it should be approved automatically. Return the invoice amount and whether manual approval is required.",
-            "temperature": 0,
             "timeoutSeconds": 30
           },
           "outputSchema": {
@@ -241,7 +226,11 @@
               "options": [
                 { "label": "Manual review", "value": "manual", "icon": "UserFocus" },
                 { "label": "Auto-approve below threshold", "value": "auto", "icon": "Lightning" },
-                { "label": "Escalate after timeout", "value": "escalate", "icon": "ArrowBendUpRight" }
+                {
+                  "label": "Escalate after timeout",
+                  "value": "escalate",
+                  "icon": "ArrowBendUpRight"
+                }
               ]
             },
             "assignee": {
@@ -339,7 +328,11 @@
                     "type": "HorizontalLayout",
                     "layoutColumns": "1fr 1fr",
                     "elements": [
-                      { "type": "Text", "scope": "#/properties/dueAfterHours", "inputType": "number" },
+                      {
+                        "type": "Text",
+                        "scope": "#/properties/dueAfterHours",
+                        "inputType": "number"
+                      },
                       { "type": "Select", "scope": "#/properties/onTimeout" }
                     ],
                     "rule": {
@@ -348,7 +341,10 @@
                         "type": "OR",
                         "conditions": [
                           { "scope": "#/properties/approvalMode", "schema": { "const": "manual" } },
-                          { "scope": "#/properties/approvalMode", "schema": { "const": "escalate" } }
+                          {
+                            "scope": "#/properties/approvalMode",
+                            "schema": { "const": "escalate" }
+                          }
                         ]
                       }
                     }
